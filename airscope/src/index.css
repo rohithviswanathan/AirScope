@@ -10,25 +10,26 @@
     "Segoe UI",
     sans-serif;
 
-  color: #f4f7fa;
-  background: #080c11;
   color-scheme: dark;
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
   --background: #080c11;
-  --foreground: #f4f7fa;
-
   --surface: #0f151d;
+  --surface-secondary: #101720;
   --surface-elevated: #151d27;
 
-  --muted: #8d9aaa;
-  --muted-foreground: #5f6b79;
+  --foreground: #f4f7fa;
+  --foreground-secondary: rgba(244, 247, 250, 0.72);
+  --foreground-muted: rgba(244, 247, 250, 0.4);
+  --foreground-subtle: rgba(244, 247, 250, 0.25);
+  --foreground-faint: rgba(244, 247, 250, 0.15);
 
-  --border: rgba(255, 255, 255, 0.08);
+  --border: rgba(255, 255, 255, 0.07);
+  --border-subtle: rgba(255, 255, 255, 0.05);
+
+  --control-background: rgba(255, 255, 255, 0.025);
+  --control-hover: rgba(255, 255, 255, 0.05);
+
+  --chart-grid: rgba(255, 255, 255, 0.045);
 
   --aqi-good: #22c55e;
   --aqi-moderate: #eab308;
@@ -36,6 +37,29 @@
   --aqi-unhealthy: #f97316;
   --aqi-very-unhealthy: #ef4444;
   --aqi-hazardous: #a855f7;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --background: #f3f6f8;
+  --surface: #ffffff;
+  --surface-secondary: #f8fafc;
+  --surface-elevated: #eef2f5;
+
+  --foreground: #17212b;
+  --foreground-secondary: rgba(23, 33, 43, 0.78);
+  --foreground-muted: rgba(23, 33, 43, 0.52);
+  --foreground-subtle: rgba(23, 33, 43, 0.38);
+  --foreground-faint: rgba(23, 33, 43, 0.2);
+
+  --border: rgba(15, 23, 42, 0.1);
+  --border-subtle: rgba(15, 23, 42, 0.065);
+
+  --control-background: rgba(15, 23, 42, 0.035);
+  --control-hover: rgba(15, 23, 42, 0.065);
+
+  --chart-grid: rgba(15, 23, 42, 0.07);
 }
 
 html {
@@ -47,6 +71,12 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background: var(--background);
+  color: var(--foreground);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 * {
@@ -79,11 +109,11 @@ button:not(:disabled) {
 
 ::-webkit-scrollbar-thumb {
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(100, 116, 139, 0.35);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(100, 116, 139, 0.5);
 }
 
 .airscope-map-popup .maplibregl-popup-content {
