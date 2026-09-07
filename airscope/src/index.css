@@ -85,3 +85,49 @@ button:not(:disabled) {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.16);
 }
+
+.airscope-map-popup .maplibregl-popup-content {
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  background: #111922;
+  box-shadow:
+    0 18px 50px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+.airscope-map-popup .maplibregl-popup-tip {
+  border-top-color: #111922;
+}
+
+.airscope-map-popup.maplibregl-popup-anchor-bottom .maplibregl-popup-tip {
+  border-top-color: #111922;
+}
+
+.airscope-map-popup.maplibregl-popup-anchor-top .maplibregl-popup-tip {
+  border-bottom-color: #111922;
+}
+
+.airscope-map-popup.maplibregl-popup-anchor-left .maplibregl-popup-tip {
+  border-right-color: #111922;
+}
+
+.airscope-map-popup.maplibregl-popup-anchor-right .maplibregl-popup-tip {
+  border-left-color: #111922;
+}
+
+.maplibregl-ctrl-group {
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 10px !important;
+  background: rgba(15, 21, 29, 0.9) !important;
+  box-shadow: none !important;
+}
+
+.maplibregl-ctrl-group button {
+  background-color: transparent !important;
+}
+
+.maplibregl-ctrl-group button + button {
+  border-top-color: rgba(255, 255, 255, 0.08) !important;
+}
