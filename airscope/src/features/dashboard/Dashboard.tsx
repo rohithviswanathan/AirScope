@@ -1,107 +1,295 @@
 import { motion } from "motion/react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  ArrowDown01Icon,
-  ArrowUp01Icon,
   CloudIcon,
   DropletIcon,
   WindPower01Icon,
+  ArrowUp01Icon,
+  ArrowDown01Icon,
 } from "@hugeicons/core-free-icons";
 
 import { AQIHero } from "../airquality/components/AQIHero";
-import { mockAQIHero } from "../airquality/data/mockAirQuality";
 import { AQITrendChart } from "../analytics/components/AQITrendChart";
 import { AirQualityMap } from "../map/components/AirQualityMap";
 import { PollutionDrivers } from "../airquality/components/PollutionDrivers";
 import { AirQualityOutlook } from "../forecast/components/AirQualityOutlook";
 
-const pollutants = [
-  {
-    name: "PM2.5",
-    fullName: "Fine particulate matter",
-    value: "67",
-    unit: "µg/m³",
-    change: "+8.3%",
-    direction: "up",
-    status: "High",
-    statusClass: "text-orange-300/75",
-    statusBackground: "bg-orange-400/[0.06]",
-    indicator: "bg-orange-400",
-    barWidth: "72%",
-    description: "Primary contributor",
-  },
-  {
-    name: "PM10",
-    fullName: "Coarse particulate matter",
-    value: "104",
-    unit: "µg/m³",
-    change: "+4.1%",
-    direction: "up",
-    status: "High",
-    statusClass: "text-orange-300/70",
-    statusBackground: "bg-orange-400/[0.06]",
-    indicator: "bg-orange-300",
-    barWidth: "61%",
-    description: "Elevated concentration",
-  },
-  {
-    name: "NO₂",
-    fullName: "Nitrogen dioxide",
-    value: "42",
-    unit: "µg/m³",
-    change: "-2.6%",
-    direction: "down",
-    status: "Moderate",
-    statusClass: "text-yellow-300/70",
-    statusBackground: "bg-yellow-400/[0.05]",
-    indicator: "bg-yellow-300",
-    barWidth: "38%",
-    description: "Trending downward",
-  },
-  {
-    name: "O₃",
-    fullName: "Ground-level ozone",
-    value: "31",
-    unit: "µg/m³",
-    change: "-1.4%",
-    direction: "down",
-    status: "Low",
-    statusClass: "text-emerald-300/70",
-    statusBackground: "bg-emerald-400/[0.05]",
-    indicator: "bg-emerald-300",
-    barWidth: "29%",
-    description: "Lower than yesterday",
-  },
-];
+import { useAirScopeData } from "../../api/useAirScopeData";
+import type { OpenMeteoLocation } from "../../api/types";
+import type {
+  AirScopePollutant,
+} from "../../api/airScopeTypes";
 
-const environmentalMetrics = [
+const BENGALURU_LOCATION: OpenMeteoLocation = {
+  id: 1277333,
+  name: "Bengaluru",
+  country: "India",
+  country_code: "IN",
+  admin1: "Karnataka",
+  latitude: 12.9716,
+  longitude: 77.5946,
+  timezone: "Asia/Kolkata",
+};
+
+const DISPLAY_POLLUTANTS = [
   {
-    label: "Temperature",
-    value: "29.4°",
-    description: "Feels like 31.1°",
-    icon: CloudIcon,
+    pollutant: "PM2.5",
+    color: "bg-orange-400",
   },
   {
-    label: "Humidity",
-    value: "74%",
-    description: "High atmospheric moisture",
-    icon: DropletIcon,
+    pollutant: "PM10",
+    color: "bg-orange-300",
   },
   {
-    label: "Wind",
-    value: "11",
-    unit: "km/h",
-    description: "North-west direction",
-    icon: WindPower01Icon,
+    pollutant: "NO₂",
+    color: "bg-yellow-300",
   },
-];
+  {
+    pollutant: "O₃",
+    color: "bg-emerald-300",
+  },
+] as const;
+
+function formatDate(
+  timestamp: string,
+  timezone?: string,
+) {
+  if (!timestamp) {
+    return "—";
+  }
+
+  const date = new Date(timestamp);
+
+  if (Number.isNaN(date.getTime())) {
+    return "—";
+  }
+
+  return new Intl.DateTimeFormat("en-IN", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    timeZone: timezone || "Asia/Kolkata",
+  }).format(date);
+}
+
+function formatUpdatedTime(
+  timestamp: string,
+  timezone?: string,
+) {
+  if (!timestamp) {
+    return "—";
+  }
+
+  const date = new Date(timestamp);
+
+  if (Number.isNaN(date.getTime())) {
+    return "—";
+  }
+
+  return new Intl.DateTimeFormat("en-IN", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: timezone || "Asia/Kolkata",
+  }).format(date);
+}
+
+function formatNumber(
+  value: number,
+) {
+  return Number.isInteger(value)
+    ? String(value)
+    : value.toFixed(1);
+}
+
+function getPollutant(
+  pollutants: AirScopePollutant[],
+  name: string,
+) {
+  return pollutants.find(
+    (pollutant) =>
+      pollutant.pollutant === name,
+  );
+}
+
+function getPollutantStatus(
+  value: number,
+  maximum: number,
+) {
+  if (maximum <= 0) {
+    return "Current";
+  }
+
+  const relative = value / maximum;
+
+  if (relative >= 0.75) {
+    return "Higher";
+  }
+
+  if (relative >= 0.4) {
+    return "Moderate";
+  }
+
+  return "Lower";
+}
+
+function DashboardLoadingState() {
+  return (
+    <div className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      <div className="animate-pulse space-y-7">
+        <div className="space-y-3">
+          <div className="h-3 w-20 rounded bg-[var(--control-hover)]" />
+
+          <div className="h-10 w-72 max-w-full rounded-xl bg-[var(--control-hover)]" />
+
+          <div className="h-4 w-[520px] max-w-full rounded bg-[var(--control-hover)]" />
+        </div>
+
+        <div className="h-[580px] rounded-[28px] border border-[var(--border)] bg-[var(--surface-secondary)]" />
+
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: 4 }).map(
+            (_, index) => (
+              <div
+                key={index}
+                className="h-32 rounded-2xl border border-[var(--border)] bg-[var(--surface-secondary)]"
+              />
+            ),
+          )}
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: 4 }).map(
+            (_, index) => (
+              <div
+                key={index}
+                className="h-48 rounded-2xl border border-[var(--border)] bg-[var(--surface)]"
+              />
+            ),
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DashboardErrorState({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry: () => void;
+}) {
+  return (
+    <div className="mx-auto flex min-h-[600px] w-full max-w-[1600px] items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md rounded-3xl border border-red-400/15 bg-red-400/[0.035] p-6 text-center">
+        <div className="mx-auto flex size-10 items-center justify-center rounded-xl bg-red-400/[0.08] text-red-300/80">
+          !
+        </div>
+
+        <h1 className="mt-4 text-lg font-semibold tracking-[-0.02em] text-[var(--foreground)]">
+          Unable to load air quality
+        </h1>
+
+        <p className="mt-2 text-sm leading-6 text-[var(--foreground-muted)]">
+          {message}
+        </p>
+
+        <button
+          type="button"
+          onClick={onRetry}
+          className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--control-background)] px-4 py-2.5 text-sm font-medium text-[var(--foreground-secondary)] transition-colors hover:bg-[var(--control-hover)]"
+        >
+          Try again
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export function Dashboard() {
+  const {
+    data,
+    isLoading,
+    isError,
+    isFetching,
+    error,
+    refetch,
+  } = useAirScopeData({
+    location: BENGALURU_LOCATION,
+  });
+
+  if (isLoading) {
+    return <DashboardLoadingState />;
+  }
+
+  if (isError || !data) {
+    return (
+      <DashboardErrorState
+        message={
+          error instanceof Error
+            ? error.message
+            : "The environmental data service did not return a usable response."
+        }
+        onRetry={() => refetch()}
+      />
+    );
+  }
+
+  const pollutants = DISPLAY_POLLUTANTS.map(
+    (definition) => {
+      const pollutant = getPollutant(
+        data.airQuality.pollutants,
+        definition.pollutant,
+      );
+
+      return {
+        name: definition.pollutant,
+        fullName:
+          pollutant?.description ??
+          "Measured air pollutant",
+        value: pollutant?.concentration ?? 0,
+        unit:
+          pollutant?.unit ?? "µg/m³",
+        color: definition.color,
+        description:
+          pollutant?.description ??
+          "Current concentration",
+      };
+    },
+  );
+
+  const maximumDisplayedPollutant =
+    Math.max(
+      ...pollutants.map(
+        (pollutant) => pollutant.value,
+      ),
+      1,
+    );
+
+  const updatedTime = formatUpdatedTime(
+    data.airQuality.updatedAt,
+    data.location.timezone,
+  );
+
+  const currentDate = formatDate(
+    data.airQuality.updatedAt,
+    data.location.timezone,
+  );
+
+  const windUnit = "km/h";
+
   return (
     <div className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{
+          opacity: 0,
+          y: 12,
+        }}
+        animate={{
+          opacity: 1,
+          y: 0,
+        }}
         transition={{
           duration: 0.55,
           ease: [0.22, 1, 0.36, 1],
@@ -113,35 +301,45 @@ export function Dashboard() {
         <header className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
           <div className="min-w-0">
             <div className="mb-2 flex flex-wrap items-center gap-2">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--foreground-subtle)]">
                 Overview
               </span>
 
-              <span className="size-1 shrink-0 rounded-full bg-white/20" />
+              <span className="size-1 shrink-0 rounded-full bg-[var(--foreground-faint)]" />
 
-              <span className="text-[10px] text-white/25">
-                September 7, 2026
+              <span className="text-[10px] text-[var(--foreground-subtle)]">
+                {currentDate}
               </span>
             </div>
 
-            <h1 className="text-[clamp(1.75rem,3vw,2.75rem)] font-semibold tracking-[-0.04em] text-white">
-              Bengaluru air quality
+            <h1 className="text-[clamp(1.75rem,3vw,2.75rem)] font-semibold tracking-[-0.04em] text-[var(--foreground)]">
+              {data.location.name} air quality
             </h1>
 
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-white/35">
-              A live view of the atmosphere around you, from current
-              pollution levels to emerging trends.
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--foreground-muted)]">
+              A live view of the atmosphere around you,
+              from current pollution levels to emerging
+              trends.
             </p>
           </div>
 
-          <div className="flex w-fit shrink-0 items-center gap-2 rounded-full border border-white/[0.06] bg-white/[0.025] px-3 py-2">
+          <div className="flex w-fit shrink-0 items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--control-background)] px-3 py-2 transition-colors duration-200">
             <span className="relative flex size-2">
-              <span className="absolute size-full animate-ping rounded-full bg-emerald-400/30" />
+              <span
+                className={`absolute size-full rounded-full bg-emerald-400/30 ${
+                  !isFetching
+                    ? "animate-ping"
+                    : "animate-pulse"
+                }`}
+              />
+
               <span className="relative size-2 rounded-full bg-emerald-400" />
             </span>
 
-            <span className="text-[11px] font-medium text-white/50">
-              Monitoring active
+            <span className="text-[11px] font-medium text-[var(--foreground-secondary)]">
+              {isFetching
+                ? "Updating data"
+                : "Monitoring active"}
             </span>
           </div>
         </header>
@@ -150,7 +348,17 @@ export function Dashboard() {
             AQI Hero
         ───────────────────────────────────────────── */}
         <section className="mt-7 sm:mt-8">
-          <AQIHero data={mockAQIHero} />
+          <AQIHero
+            data={{
+              city: data.location.name,
+              country: data.location.country,
+              aqi: data.airQuality.aqi,
+              status: data.airQuality.status,
+              dominantPollutant:
+                data.airQuality.dominantPollutant,
+              updatedAt: updatedTime,
+            }}
+          />
         </section>
 
         {/* ─────────────────────────────────────────────
@@ -158,229 +366,347 @@ export function Dashboard() {
         ───────────────────────────────────────────── */}
         <section className="mt-5">
           <div className="mb-3 px-1">
-            <p className="text-sm font-medium text-white/80">
+            <p className="text-sm font-medium text-[var(--foreground-secondary)]">
               Environmental conditions
             </p>
 
-            <p className="mt-1 text-xs text-white/30">
+            <p className="mt-1 text-xs text-[var(--foreground-muted)]">
               Conditions that can influence local air quality
             </p>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {environmentalMetrics.map((metric) => (
-              <div
-                key={metric.label}
-                className="group rounded-2xl border border-white/[0.06] bg-[#101720] p-5 transition-colors duration-200 hover:border-white/[0.1] hover:bg-[#111922]"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-white/30">
-                      {metric.label}
-                    </p>
+            {/* Temperature */}
+            <div className="group rounded-2xl border border-[var(--border)] bg-[var(--surface-secondary)] p-5 transition-colors duration-200 hover:border-[var(--foreground-faint)] hover:bg-[var(--surface-elevated)]">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--foreground-subtle)]">
+                    Temperature
+                  </p>
 
-                    <div className="mt-3 flex items-baseline gap-1.5">
-                      <span className="text-[28px] font-semibold tracking-[-0.045em] text-white">
-                        {metric.value}
-                      </span>
-
-                      {metric.unit && (
-                        <span className="text-xs font-medium text-white/25">
-                          {metric.unit}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/[0.04]">
-                    <HugeiconsIcon
-                      icon={metric.icon}
-                      size={19}
-                      strokeWidth={1.5}
-                      className="text-white/40 transition-colors duration-200 group-hover:text-white/60"
-                    />
+                  <div className="mt-3 flex items-baseline gap-1.5">
+                    <span className="text-[28px] font-semibold tracking-[-0.045em] text-[var(--foreground)]">
+                      {formatNumber(
+                        data.weather.temperature,
+                      )}°
+                    </span>
                   </div>
                 </div>
 
-                <p className="mt-3 truncate text-xs text-white/30">
-                  {metric.description}
-                </p>
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[var(--control-background)] transition-colors duration-200 group-hover:bg-[var(--control-hover)]">
+                  <HugeiconsIcon
+                    icon={CloudIcon}
+                    size={19}
+                    strokeWidth={1.5}
+                    className="text-[var(--foreground-muted)] transition-colors duration-200 group-hover:text-[var(--foreground-secondary)]"
+                  />
+                </div>
               </div>
-            ))}
+
+              <p className="mt-3 truncate text-xs text-[var(--foreground-muted)]">
+                Feels like{" "}
+                {formatNumber(
+                  data.weather
+                    .apparentTemperature,
+                )}
+                °
+              </p>
+            </div>
+
+            {/* Humidity */}
+            <div className="group rounded-2xl border border-[var(--border)] bg-[var(--surface-secondary)] p-5 transition-colors duration-200 hover:border-[var(--foreground-faint)] hover:bg-[var(--surface-elevated)]">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--foreground-subtle)]">
+                    Humidity
+                  </p>
+
+                  <div className="mt-3 flex items-baseline gap-1.5">
+                    <span className="text-[28px] font-semibold tracking-[-0.045em] text-[var(--foreground)]">
+                      {Math.round(
+                        data.weather.humidity,
+                      )}
+                      %
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[var(--control-background)] transition-colors duration-200 group-hover:bg-[var(--control-hover)]">
+                  <HugeiconsIcon
+                    icon={DropletIcon}
+                    size={19}
+                    strokeWidth={1.5}
+                    className="text-[var(--foreground-muted)] transition-colors duration-200 group-hover:text-[var(--foreground-secondary)]"
+                  />
+                </div>
+              </div>
+
+              <p className="mt-3 truncate text-xs text-[var(--foreground-muted)]">
+                Relative atmospheric humidity
+              </p>
+            </div>
+
+            {/* Wind */}
+            <div className="group rounded-2xl border border-[var(--border)] bg-[var(--surface-secondary)] p-5 transition-colors duration-200 hover:border-[var(--foreground-faint)] hover:bg-[var(--surface-elevated)]">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--foreground-subtle)]">
+                    Wind
+                  </p>
+
+                  <div className="mt-3 flex items-baseline gap-1.5">
+                    <span className="text-[28px] font-semibold tracking-[-0.045em] text-[var(--foreground)]">
+                      {formatNumber(
+                        data.weather.windSpeed,
+                      )}
+                    </span>
+
+                    <span className="text-xs font-medium text-[var(--foreground-subtle)]">
+                      {windUnit}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[var(--control-background)] transition-colors duration-200 group-hover:bg-[var(--control-hover)]">
+                  <HugeiconsIcon
+                    icon={WindPower01Icon}
+                    size={19}
+                    strokeWidth={1.5}
+                    className="text-[var(--foreground-muted)] transition-colors duration-200 group-hover:text-[var(--foreground-secondary)]"
+                  />
+                </div>
+              </div>
+
+              <p className="mt-3 truncate text-xs text-[var(--foreground-muted)]">
+                {data.weather.windDirectionLabel} direction ·{" "}
+                {Math.round(
+                  data.weather.windDirection,
+                )}
+                °
+              </p>
+            </div>
 
             {/* Visibility */}
-            <div className="group rounded-2xl border border-white/[0.06] bg-[#101720] p-5 transition-colors duration-200 hover:border-white/[0.1] hover:bg-[#111922]">
+            <div className="group rounded-2xl border border-[var(--border)] bg-[var(--surface-secondary)] p-5 transition-colors duration-200 hover:border-[var(--foreground-faint)] hover:bg-[var(--surface-elevated)]">
               <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-white/30">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--foreground-subtle)]">
                     Visibility
                   </p>
 
                   <div className="mt-3 flex items-baseline gap-1.5">
-                    <span className="text-[28px] font-semibold tracking-[-0.045em] text-white">
-                      7.8
+                    <span className="text-[28px] font-semibold tracking-[-0.045em] text-[var(--foreground)]">
+                      {formatNumber(
+                        data.weather.visibility,
+                      )}
                     </span>
 
-                    <span className="text-xs font-medium text-white/25">
+                    <span className="text-xs font-medium text-[var(--foreground-subtle)]">
                       km
                     </span>
                   </div>
                 </div>
 
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/[0.04]">
-                  <div className="size-2 rounded-full bg-white/35 transition-transform duration-200 group-hover:scale-125" />
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[var(--control-background)]">
+                  <div className="size-2 rounded-full bg-[var(--foreground-muted)] transition-transform duration-200 group-hover:scale-125" />
                 </div>
               </div>
 
-              <p className="mt-3 truncate text-xs text-white/30">
-                Reduced by atmospheric haze
+              <p className="mt-3 truncate text-xs text-[var(--foreground-muted)]">
+                Current atmospheric visibility
               </p>
             </div>
           </div>
         </section>
 
-        {/* Pollutants */}
+        {/* ─────────────────────────────────────────────
+            Pollutants
+        ───────────────────────────────────────────── */}
         <section className="mt-7">
           <div className="mb-4 flex items-end justify-between px-1">
             <div>
               <div className="flex items-center gap-2">
-                <p className="text-sm font-medium text-white/80">
+                <p className="text-sm font-medium text-[var(--foreground-secondary)]">
                   Pollutant levels
                 </p>
 
-                <span className="size-1 rounded-full bg-white/15" />
-                <span className="text-[10px] uppercase tracking-[0.12em] text-white/20">
+                <span className="size-1 rounded-full bg-[var(--foreground-faint)]" />
+
+                <span className="text-[10px] uppercase tracking-[0.12em] text-[var(--foreground-faint)]">
                   Live snapshot
                 </span>
               </div>
 
-              <p className="mt-1 text-xs text-white/30">
-                Current concentration across key pollutants
+              <p className="mt-1 text-xs text-[var(--foreground-muted)]">
+                Current measured concentration across key pollutants
               </p>
             </div>
 
-            <span className="hidden text-[10px] uppercase tracking-[0.14em] text-white/20 sm:block">
+            <span className="hidden text-[10px] uppercase tracking-[0.14em] text-[var(--foreground-faint)] sm:block">
               µg/m³
             </span>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {pollutants.map((pollutant, index) => (
-              <motion.div
-                key={pollutant.name}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: 0.45,
-                  delay: index * 0.06,
-                  ease: [0.22, 1, 0.36, 1],
-                }}
-                whileHover={{ y: -3 }}
-                className="group rounded-2xl border border-white/[0.06] bg-[#0F151D] p-5 transition-colors duration-200 hover:border-white/[0.11] hover:bg-[#111922]"
-              >
-                {/* Card header */}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`size-2 shrink-0 rounded-full ${pollutant.indicator}`}
-                      />
+            {pollutants.map(
+              (pollutant, index) => {
+                const relativeLevel =
+                  Math.max(
+                    8,
+                    Math.min(
+                      100,
+                      (pollutant.value /
+                        maximumDisplayedPollutant) *
+                        100,
+                    ),
+                  );
 
-                      <span className="text-sm font-semibold tracking-[-0.02em] text-white/75">
-                        {pollutant.name}
-                      </span>
+                const relativeStatus =
+                  getPollutantStatus(
+                    pollutant.value,
+                    maximumDisplayedPollutant,
+                  );
+
+                return (
+                  <motion.div
+                    key={pollutant.name}
+                    initial={{
+                      opacity: 0,
+                      y: 8,
+                    }}
+                    animate={{
+                      opacity: 1,
+                      y: 0,
+                    }}
+                    transition={{
+                      duration: 0.45,
+                      delay:
+                        index * 0.06,
+                      ease: [
+                        0.22,
+                        1,
+                        0.36,
+                        1,
+                      ],
+                    }}
+                    whileHover={{
+                      y: -3,
+                    }}
+                    className="group rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 transition-colors duration-200 hover:border-[var(--foreground-faint)] hover:bg-[var(--surface-secondary)]"
+                  >
+                    {/* Header */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`size-2 shrink-0 rounded-full ${pollutant.color}`}
+                          />
+
+                          <span className="text-sm font-semibold tracking-[-0.02em] text-[var(--foreground-secondary)]">
+                            {pollutant.name}
+                          </span>
+                        </div>
+
+                        <p className="mt-1 truncate text-[10px] text-[var(--foreground-subtle)]">
+                          {pollutant.fullName}
+                        </p>
+                      </div>
+
+                      <div className="shrink-0 rounded-full border border-[var(--border-subtle)] bg-[var(--control-background)] px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.1em] text-[var(--foreground-muted)]">
+                        {relativeStatus}
+                      </div>
                     </div>
 
-                    <p className="mt-1 truncate text-[10px] text-white/25">
-                      {pollutant.fullName}
-                    </p>
-                  </div>
+                    {/* Value */}
+                    <div className="mt-6">
+                      <div className="flex items-end gap-1.5">
+                        <span className="text-[34px] font-semibold leading-none tracking-[-0.055em] text-[var(--foreground)]">
+                          {formatNumber(
+                            pollutant.value,
+                          )}
+                        </span>
 
-                  <div
-                    className={`shrink-0 rounded-full px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.1em] ${pollutant.statusBackground} ${pollutant.statusClass}`}
-                  >
-                    {pollutant.status}
-                  </div>
-                </div>
+                        <span className="mb-0.5 text-xs font-medium text-[var(--foreground-subtle)]">
+                          {pollutant.unit}
+                        </span>
+                      </div>
+                    </div>
 
-                {/* Value */}
-                <div className="mt-6">
-                  <div className="flex items-end gap-1.5">
-                    <motion.span
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{
-                        duration: 0.45,
-                        delay: 0.15 + index * 0.06,
-                      }}
-                      className="text-[34px] font-semibold leading-none tracking-[-0.055em] text-white"
-                    >
-                      {pollutant.value}
-                    </motion.span>
+                    {/* Live reading */}
+                    <div className="mt-4 flex items-center gap-1.5 text-[11px] font-medium text-emerald-300/70">
+                      {pollutant.value >
+                      0 ? (
+                        <>
+                          <HugeiconsIcon
+                            icon={
+                              pollutant.value >=
+                              maximumDisplayedPollutant *
+                                0.5
+                                ? ArrowUp01Icon
+                                : ArrowDown01Icon
+                            }
+                            size={13}
+                            strokeWidth={1.8}
+                          />
 
-                    <span className="mb-0.5 text-xs font-medium text-white/25">
-                      {pollutant.unit}
-                    </span>
-                  </div>
-                </div>
+                          <span>
+                            Live concentration
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-[var(--foreground-subtle)]">
+                          No current reading
+                        </span>
+                      )}
+                    </div>
 
-                {/* Change */}
-                <div className="mt-4 flex items-center justify-between gap-3">
-                  <div
-                    className={`flex items-center gap-1.5 text-[11px] font-medium ${
-                      pollutant.direction === "up"
-                        ? "text-orange-300/65"
-                        : "text-emerald-300/65"
-                    }`}
-                  >
-                    <HugeiconsIcon
-                      icon={
-                        pollutant.direction === "up"
-                          ? ArrowUp01Icon
-                          : ArrowDown01Icon
-                      }
-                      size={13}
-                      strokeWidth={1.8}
-                    />
+                    {/* Visual scale */}
+                    <div className="mt-5">
+                      <div className="flex items-center justify-between text-[9px] uppercase tracking-[0.1em] text-[var(--foreground-faint)]">
+                        <span>
+                          Relative concentration
+                        </span>
 
-                    <span>{pollutant.change}</span>
+                        <span>
+                          {relativeStatus}
+                        </span>
+                      </div>
 
-                    <span className="text-white/20">
-                      vs yesterday
-                    </span>
-                  </div>
-                </div>
+                      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--control-hover)]">
+                        <motion.div
+                          initial={{
+                            width: 0,
+                          }}
+                          animate={{
+                            width: `${relativeLevel}%`,
+                          }}
+                          transition={{
+                            duration: 0.8,
+                            delay:
+                              0.2 +
+                              index * 0.07,
+                            ease: [
+                              0.22,
+                              1,
+                              0.36,
+                              1,
+                            ],
+                          }}
+                          className={`h-full rounded-full ${pollutant.color}`}
+                        />
+                      </div>
+                    </div>
 
-                {/* Visual scale */}
-                <div className="mt-5">
-                  <div className="flex items-center justify-between text-[9px] uppercase tracking-[0.1em] text-white/20">
-                    <span>Relative level</span>
-
-                    <span>{pollutant.status}</span>
-                  </div>
-
-                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.05]">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: pollutant.barWidth }}
-                      transition={{
-                        duration: 0.8,
-                        delay: 0.2 + index * 0.07,
-                        ease: [0.22, 1, 0.36, 1],
-                      }}
-                      className={`h-full rounded-full ${pollutant.indicator}`}
-                    />
-                  </div>
-                </div>
-
-                {/* Footer */}
-                <div className="mt-4 border-t border-white/[0.05] pt-3">
-                  <p className="text-[10px] text-white/25">
-                    {pollutant.description}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
+                    {/* Footer */}
+                    <div className="mt-4 border-t border-[var(--border-subtle)] pt-3">
+                      <p className="text-[10px] text-[var(--foreground-subtle)]">
+                        {pollutant.description}
+                      </p>
+                    </div>
+                  </motion.div>
+                );
+              },
+            )}
           </div>
         </section>
 
