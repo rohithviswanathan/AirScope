@@ -11,7 +11,6 @@ import { Dashboard } from "./features/dashboard/Dashboard";
 import { AnalyticsPage } from "./features/analytics/pages/AnalyticsPage";
 import { ForecastPage } from "./features/forecast/pages/ForecastPage";
 import { LocationsPage } from "./features/map/pages/LocationsPage";
-import { ApiTestPage } from "./features/api-test/pages/ApiTestPage";
 
 function App() {
   return (
@@ -40,11 +39,6 @@ function App() {
           <Route
             path="/locations"
             element={<LocationsPage />}
-          />
-
-          <Route
-            path="/api-test"
-            element={<ApiTestPage />}
           />
 
           {/* Default */}
