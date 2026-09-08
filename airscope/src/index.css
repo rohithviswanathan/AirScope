@@ -31,6 +31,12 @@
 
   --chart-grid: rgba(255, 255, 255, 0.045);
 
+  /* Map */
+  --map-control-background: rgba(15, 21, 29, 0.92);
+  --map-popup-background: #111922;
+  --map-popup-shadow: rgba(0, 0, 0, 0.35);
+
+  /* AQI semantic colors */
   --aqi-good: #22c55e;
   --aqi-moderate: #eab308;
   --aqi-sensitive: #f59e0b;
@@ -60,10 +66,16 @@
   --control-hover: rgba(15, 23, 42, 0.065);
 
   --chart-grid: rgba(15, 23, 42, 0.07);
+
+  /* Map */
+  --map-control-background: rgba(255, 255, 255, 0.94);
+  --map-popup-background: #ffffff;
+  --map-popup-shadow: rgba(15, 23, 42, 0.14);
 }
 
 html {
   background: var(--background);
+  color-scheme: inherit;
 }
 
 body {
@@ -77,6 +89,10 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  transition:
+    background-color 220ms ease,
+    color 220ms ease;
 }
 
 * {
@@ -116,48 +132,82 @@ button:not(:disabled) {
   background: rgba(100, 116, 139, 0.5);
 }
 
+/* ─────────────────────────────────────────────
+   MapLibre popup
+   ───────────────────────────────────────────── */
+
 .airscope-map-popup .maplibregl-popup-content {
   padding: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
   border-radius: 14px;
-  background: #111922;
+  background: var(--map-popup-background);
+  color: var(--foreground);
+
   box-shadow:
-    0 18px 50px rgba(0, 0, 0, 0.35),
-    0 0 0 1px rgba(255, 255, 255, 0.02);
+    0 18px 50px var(--map-popup-shadow),
+    0 0 0 1px var(--border-subtle);
+
+  transition:
+    background-color 220ms ease,
+    border-color 220ms ease,
+    color 220ms ease;
 }
 
 .airscope-map-popup .maplibregl-popup-tip {
-  border-top-color: #111922;
+  border-top-color: var(--map-popup-background);
 }
 
-.airscope-map-popup.maplibregl-popup-anchor-bottom .maplibregl-popup-tip {
-  border-top-color: #111922;
+.airscope-map-popup.maplibregl-popup-anchor-bottom
+  .maplibregl-popup-tip {
+  border-top-color: var(--map-popup-background);
 }
 
-.airscope-map-popup.maplibregl-popup-anchor-top .maplibregl-popup-tip {
-  border-bottom-color: #111922;
+.airscope-map-popup.maplibregl-popup-anchor-top
+  .maplibregl-popup-tip {
+  border-bottom-color: var(--map-popup-background);
 }
 
-.airscope-map-popup.maplibregl-popup-anchor-left .maplibregl-popup-tip {
-  border-right-color: #111922;
+.airscope-map-popup.maplibregl-popup-anchor-left
+  .maplibregl-popup-tip {
+  border-right-color: var(--map-popup-background);
 }
 
-.airscope-map-popup.maplibregl-popup-anchor-right .maplibregl-popup-tip {
-  border-left-color: #111922;
+.airscope-map-popup.maplibregl-popup-anchor-right
+  .maplibregl-popup-tip {
+  border-left-color: var(--map-popup-background);
 }
+
+/* ─────────────────────────────────────────────
+   MapLibre controls
+   ───────────────────────────────────────────── */
 
 .maplibregl-ctrl-group {
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+
+  border: 1px solid var(--border) !important;
   border-radius: 10px !important;
-  background: rgba(15, 21, 29, 0.9) !important;
-  box-shadow: none !important;
+
+  background: var(--map-control-background) !important;
+
+  box-shadow:
+    0 8px 24px rgba(15, 23, 42, 0.08) !important;
+
+  transition:
+    background-color 220ms ease,
+    border-color 220ms ease;
 }
 
 .maplibregl-ctrl-group button {
   background-color: transparent !important;
+
+  transition:
+    background-color 160ms ease;
+}
+
+.maplibregl-ctrl-group button:hover {
+  background-color: var(--control-hover) !important;
 }
 
 .maplibregl-ctrl-group button + button {
-  border-top-color: rgba(255, 255, 255, 0.08) !important;
+  border-top-color: var(--border) !important;
 }
