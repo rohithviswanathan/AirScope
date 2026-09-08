@@ -141,8 +141,12 @@ export async function getWeather(
 /**
  * Get current + hourly air quality data.
  *
- * We request US AQI because AirScope currently
- * uses the US AQI scale in its UI.
+ * AirScope uses the US AQI scale.
+ *
+ * In addition to the overall US AQI, we request the
+ * individual pollutant AQI values so the normalized
+ * layer can correctly identify which pollutant is
+ * driving the current AQI.
  */
 export async function getAirQuality(
   latitude: number,
@@ -164,7 +168,14 @@ export async function getAirQuality(
         "nitrogen_dioxide",
         "sulphur_dioxide",
         "ozone",
+
         "us_aqi",
+        "us_aqi_pm2_5",
+        "us_aqi_pm10",
+        "us_aqi_carbon_monoxide",
+        "us_aqi_nitrogen_dioxide",
+        "us_aqi_sulphur_dioxide",
+        "us_aqi_ozone",
       ].join(","),
 
       hourly: [
@@ -174,7 +185,14 @@ export async function getAirQuality(
         "nitrogen_dioxide",
         "sulphur_dioxide",
         "ozone",
+
         "us_aqi",
+        "us_aqi_pm2_5",
+        "us_aqi_pm10",
+        "us_aqi_carbon_monoxide",
+        "us_aqi_nitrogen_dioxide",
+        "us_aqi_sulphur_dioxide",
+        "us_aqi_ozone",
       ].join(","),
 
       past_hours: 24,
