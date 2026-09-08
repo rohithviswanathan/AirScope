@@ -1,4 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { motion } from "motion/react";
 import * as echarts from "echarts";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -7,92 +12,339 @@ import {
   InformationCircleIcon,
 } from "@hugeicons/core-free-icons";
 
-import { mockPollutionDrivers } from "../data/mockPollutionDrivers";
+import { useTheme } from "../../../components/theme/ThemeProvider";
+import { useAirScopeData } from "../../../api/useAirScopeData";
+import type { OpenMeteoLocation } from "../../../api/types";
 
-const DRIVER_COLORS = [
+const BENGALURU_LOCATION: OpenMeteoLocation = {
+  id: 1277333,
+  name: "Bengaluru",
+  country: "India",
+  country_code: "IN",
+  admin1: "Karnataka",
+  latitude: 12.9716,
+  longitude: 77.5946,
+  timezone: "Asia/Kolkata",
+};
+
+const POLLUTANT_COLORS = [
   "#F97316",
   "#F59E0B",
   "#EAB308",
-  "#64748B",
+  "#22C55E",
+  "#38BDF8",
+  "#94A3B8",
 ];
 
+function getThemeColors() {
+  const styles = getComputedStyle(
+    document.documentElement,
+  );
+
+  return {
+    foreground:
+      styles
+        .getPropertyValue("--foreground")
+        .trim() || "#F4F7FA",
+
+    foregroundSecondary:
+      styles
+        .getPropertyValue("--foreground-secondary")
+        .trim() ||
+      "rgba(244,247,250,0.72)",
+
+    foregroundMuted:
+      styles
+        .getPropertyValue("--foreground-muted")
+        .trim() ||
+      "rgba(244,247,250,0.4)",
+
+    foregroundSubtle:
+      styles
+        .getPropertyValue("--foreground-subtle")
+        .trim() ||
+      "rgba(244,247,250,0.25)",
+
+    foregroundFaint:
+      styles
+        .getPropertyValue("--foreground-faint")
+        .trim() ||
+      "rgba(244,247,250,0.15)",
+
+    border:
+      styles
+        .getPropertyValue("--border")
+        .trim() ||
+      "rgba(255,255,255,0.07)",
+
+    surface:
+      styles
+        .getPropertyValue("--surface")
+        .trim() || "#0F151D",
+
+    surfaceElevated:
+      styles
+        .getPropertyValue("--surface-elevated")
+        .trim() || "#151D27",
+
+    controlBackground:
+      styles
+        .getPropertyValue(
+          "--control-background",
+        )
+        .trim() ||
+      "rgba(255,255,255,0.025)",
+
+    controlHover:
+      styles
+        .getPropertyValue("--control-hover")
+        .trim() ||
+      "rgba(255,255,255,0.05)",
+  };
+}
+
+function formatNumber(value: number) {
+  return Number.isInteger(value)
+    ? String(value)
+    : value.toFixed(1);
+}
+
+function makePollutantId(
+  pollutant: string,
+) {
+  return pollutant
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function getRelativeStatus(
+  value: number,
+  maximum: number,
+) {
+  if (maximum <= 0) {
+    return "Current";
+  }
+
+  const ratio = value / maximum;
+
+  if (ratio >= 0.75) {
+    return "Higher";
+  }
+
+  if (ratio >= 0.4) {
+    return "Moderate";
+  }
+
+  return "Lower";
+}
+
 export function PollutionDrivers() {
-  const chartRef = useRef<HTMLDivElement | null>(null);
-  const chartInstanceRef = useRef<echarts.ECharts | null>(null);
+  const chartRef =
+    useRef<HTMLDivElement | null>(null);
 
-  const [activeDriver, setActiveDriver] = useState<string | null>(
-    null,
-  );
+  const chartInstanceRef =
+    useRef<echarts.ECharts | null>(null);
 
-  const activeIndex = mockPollutionDrivers.findIndex(
-    (driver) => driver.id === activeDriver,
-  );
+  const [activePollutant, setActivePollutant] =
+    useState<string | null>(null);
 
-  const dominantDriver = mockPollutionDrivers[0];
+  const { theme } = useTheme();
+
+  const {
+    data,
+    isLoading,
+    isError,
+  } = useAirScopeData({
+    location: BENGALURU_LOCATION,
+  });
+
+  const pollutants = useMemo(() => {
+    if (!data) {
+      return [];
+    }
+
+    return data.airQuality.pollutants.map(
+      (pollutant, index) => ({
+        ...pollutant,
+
+        id: makePollutantId(
+          pollutant.pollutant,
+        ),
+
+        color:
+          POLLUTANT_COLORS[index] ??
+          POLLUTANT_COLORS[
+            POLLUTANT_COLORS.length - 1
+          ],
+      }),
+    );
+  }, [data]);
+
+  const maximumConcentration =
+    useMemo(() => {
+      return Math.max(
+        ...pollutants.map(
+          (pollutant) =>
+            pollutant.concentration,
+        ),
+        1,
+      );
+    }, [pollutants]);
+
+  const dominantPollutant =
+    useMemo(() => {
+      if (!data) {
+        return null;
+      }
+
+      return (
+        pollutants.find(
+          (pollutant) =>
+            pollutant.pollutant ===
+            data.airQuality.dominantPollutant,
+        ) ??
+        pollutants[0] ??
+        null
+      );
+    }, [data, pollutants]);
+
+  const activePollutantData =
+    pollutants.find(
+      (pollutant) =>
+        pollutant.id === activePollutant,
+    ) ??
+    dominantPollutant ??
+    null;
 
   useEffect(() => {
-    if (!chartRef.current) {
+    if (
+      !chartRef.current ||
+      !pollutants.length
+    ) {
       return;
     }
 
-    const chart = echarts.init(chartRef.current);
+    const chart = echarts.init(
+      chartRef.current,
+    );
 
-    chartInstanceRef.current = chart;
+    chartInstanceRef.current =
+      chart;
 
-    const renderChart = () => {
-      chart.setOption({
+    const resizeObserver =
+      new ResizeObserver(() => {
+        chart.resize();
+      });
+
+    resizeObserver.observe(
+      chartRef.current,
+    );
+
+    return () => {
+      resizeObserver.disconnect();
+      chart.dispose();
+      chartInstanceRef.current =
+        null;
+    };
+  }, [pollutants.length]);
+
+  useEffect(() => {
+    const chart =
+      chartInstanceRef.current;
+
+    if (
+      !chart ||
+      !pollutants.length
+    ) {
+      return;
+    }
+
+    const colors =
+      getThemeColors();
+
+    const activeIndex =
+      pollutants.findIndex(
+        (pollutant) =>
+          pollutant.id ===
+          activePollutant,
+      );
+
+    chart.setOption(
+      {
         animation: true,
-        animationDuration: 700,
+        animationDuration: 650,
         animationEasing: "cubicOut",
 
         tooltip: {
           trigger: "item",
 
-          backgroundColor: "#151D27",
-          borderColor: "rgba(255,255,255,0.08)",
+          backgroundColor:
+            colors.surfaceElevated,
+
+          borderColor:
+            colors.border,
+
           borderWidth: 1,
+
           padding: [10, 12],
 
           textStyle: {
-            color: "#F4F7FA",
+            color:
+              colors.foreground,
             fontSize: 12,
           },
 
-          formatter: (params: {
-            name: string;
-            value: number;
-          }) => {
+          formatter: (
+            params: unknown,
+          ) => {
+            const item =
+              params as {
+                name?: string;
+                value?: number;
+              };
+
             return `
-              <div style="min-width: 125px;">
+              <div style="min-width:135px;">
                 <div style="
-                  color: rgba(255,255,255,0.4);
-                  font-size: 10px;
-                  margin-bottom: 6px;
+                  color:${colors.foregroundMuted};
+                  font-size:10px;
+                  margin-bottom:6px;
                 ">
-                  Estimated contribution
+                  Relative concentration
                 </div>
 
                 <div style="
-                  display: flex;
-                  align-items: baseline;
-                  justify-content: space-between;
-                  gap: 18px;
+                  display:flex;
+                  align-items:baseline;
+                  justify-content:space-between;
+                  gap:18px;
                 ">
                   <span style="
-                    color: rgba(255,255,255,0.65);
-                    font-size: 12px;
-                    font-weight: 500;
+                    color:${colors.foregroundSecondary};
+                    font-size:12px;
+                    font-weight:500;
                   ">
-                    ${params.name}
+                    ${item.name ?? ""}
                   </span>
 
                   <span style="
-                    color: #F4F7FA;
-                    font-size: 17px;
-                    font-weight: 600;
+                    color:${colors.foreground};
+                    font-size:16px;
+                    font-weight:600;
                   ">
-                    ${params.value}%
+                    ${formatNumber(
+                      item.value ?? 0,
+                    )}
                   </span>
+                </div>
+
+                <div style="
+                  color:${colors.foregroundSubtle};
+                  font-size:9px;
+                  margin-top:4px;
+                ">
+                  µg/m³
                 </div>
               </div>
             `;
@@ -101,16 +353,28 @@ export function PollutionDrivers() {
 
         series: [
           {
-            name: "Pollution contribution",
+            name:
+              "Pollutant concentration",
+
             type: "pie",
 
-            radius: ["61%", "84%"],
-            center: ["50%", "50%"],
+            radius: [
+              "61%",
+              "84%",
+            ],
 
-            avoidLabelOverlap: true,
+            center: [
+              "50%",
+              "50%",
+            ],
+
+            avoidLabelOverlap:
+              true,
 
             itemStyle: {
-              borderColor: "#0F151D",
+              borderColor:
+                colors.surface,
+
               borderWidth: 3,
             },
 
@@ -125,104 +389,44 @@ export function PollutionDrivers() {
             emphasis: {
               scale: true,
               scaleSize: 5,
+
               itemStyle: {
                 shadowBlur: 20,
-                shadowColor: "rgba(0,0,0,0.25)",
+
+                shadowColor:
+                  theme === "light"
+                    ? "rgba(15,23,42,0.14)"
+                    : "rgba(0,0,0,0.25)",
               },
             },
 
-            data: mockPollutionDrivers.map(
-              (driver, index) => ({
-                name: driver.pollutant,
-                value: driver.value,
+            data: pollutants.map(
+              (pollutant, index) => ({
+                name:
+                  pollutant.pollutant,
+
+                value:
+                  pollutant.concentration,
+
                 itemStyle: {
-                  color: DRIVER_COLORS[index],
+                  color:
+                    pollutant.color,
+
                   opacity:
-                    activeDriver === null ||
-                    activeIndex === index
+                    activePollutant ===
+                      null ||
+                    activeIndex ===
+                      index
                       ? 1
-                      : 0.28,
+                      : 0.25,
                 },
               }),
             ),
           },
         ],
-      });
-
-      if (activeIndex >= 0) {
-        chart.dispatchAction({
-          type: "highlight",
-          seriesIndex: 0,
-          dataIndex: activeIndex,
-        });
-      }
-    };
-
-    renderChart();
-
-    chart.on("mouseover", (params) => {
-      if (
-        "dataIndex" in params &&
-        typeof params.dataIndex === "number"
-      ) {
-        const driver =
-          mockPollutionDrivers[params.dataIndex];
-
-        if (driver) {
-          setActiveDriver(driver.id);
-        }
-      }
-    });
-
-    chart.on("mouseout", () => {
-      setActiveDriver(null);
-    });
-
-    const resizeObserver = new ResizeObserver(() => {
-      chart.resize();
-    });
-
-    resizeObserver.observe(chartRef.current);
-
-    return () => {
-      resizeObserver.disconnect();
-      chart.off("mouseover");
-      chart.off("mouseout");
-      chart.dispose();
-      chartInstanceRef.current = null;
-    };
-  }, []);
-
-  /*
-   * Update segment emphasis when a row is hovered.
-   */
-  useEffect(() => {
-    const chart = chartInstanceRef.current;
-
-    if (!chart) {
-      return;
-    }
-
-    chart.setOption({
-      series: [
-        {
-          data: mockPollutionDrivers.map(
-            (driver, index) => ({
-              name: driver.pollutant,
-              value: driver.value,
-              itemStyle: {
-                color: DRIVER_COLORS[index],
-                opacity:
-                  activeDriver === null ||
-                  activeIndex === index
-                    ? 1
-                    : 0.28,
-              },
-            }),
-          ),
-        },
-      ],
-    });
+      },
+      true,
+    );
 
     chart.dispatchAction({
       type: "downplay",
@@ -236,37 +440,142 @@ export function PollutionDrivers() {
         dataIndex: activeIndex,
       });
     }
-  }, [activeDriver, activeIndex]);
+  }, [
+    activePollutant,
+    pollutants,
+    theme,
+  ]);
 
-  const handleDriverEnter = (id: string) => {
-    setActiveDriver(id);
+  useEffect(() => {
+    const chart =
+      chartInstanceRef.current;
 
-    const index = mockPollutionDrivers.findIndex(
-      (driver) => driver.id === id,
+    if (!chart || !pollutants.length) {
+      return;
+    }
+
+    chart.off("mouseover");
+    chart.off("mouseout");
+
+    chart.on(
+      "mouseover",
+      (params) => {
+        if (
+          "dataIndex" in params &&
+          typeof params.dataIndex ===
+            "number"
+        ) {
+          const pollutant =
+            pollutants[
+              params.dataIndex
+            ];
+
+          if (pollutant) {
+            setActivePollutant(
+              pollutant.id,
+            );
+          }
+        }
+      },
     );
 
-    if (index >= 0 && chartInstanceRef.current) {
-      chartInstanceRef.current.dispatchAction({
-        type: "downplay",
-        seriesIndex: 0,
-      });
+    chart.on(
+      "mouseout",
+      () => {
+        setActivePollutant(
+          null,
+        );
+      },
+    );
 
-      chartInstanceRef.current.dispatchAction({
-        type: "highlight",
-        seriesIndex: 0,
-        dataIndex: index,
-      });
+    return () => {
+      chart.off("mouseover");
+      chart.off("mouseout");
+    };
+  }, [pollutants]);
+
+  const handleEnter = (
+    id: string,
+  ) => {
+    setActivePollutant(id);
+
+    const index =
+      pollutants.findIndex(
+        (pollutant) =>
+          pollutant.id === id,
+      );
+
+    if (
+      index >= 0 &&
+      chartInstanceRef.current
+    ) {
+      chartInstanceRef.current.dispatchAction(
+        {
+          type: "downplay",
+          seriesIndex: 0,
+        },
+      );
+
+      chartInstanceRef.current.dispatchAction(
+        {
+          type: "highlight",
+          seriesIndex: 0,
+          dataIndex: index,
+        },
+      );
     }
   };
 
-  const handleDriverLeave = () => {
-    setActiveDriver(null);
+  const handleLeave = () => {
+    setActivePollutant(null);
 
-    chartInstanceRef.current?.dispatchAction({
-      type: "downplay",
-      seriesIndex: 0,
-    });
+    chartInstanceRef.current?.dispatchAction(
+      {
+        type: "downplay",
+        seriesIndex: 0,
+      },
+    );
   };
+
+  if (isLoading) {
+    return (
+      <section className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6">
+        <div className="animate-pulse">
+          <div className="h-4 w-40 rounded bg-[var(--control-hover)]" />
+          <div className="mt-2 h-3 w-72 rounded bg-[var(--control-hover)]" />
+
+          <div className="mt-8 grid gap-8 lg:grid-cols-[230px_minmax(0,1fr)]">
+            <div className="mx-auto size-[210px] rounded-full bg-[var(--control-background)]" />
+
+            <div className="space-y-3">
+              {Array.from({
+                length: 5,
+              }).map((_, index) => (
+                <div
+                  key={index}
+                  className="h-20 rounded-2xl bg-[var(--control-background)]"
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (isError || !data) {
+    return (
+      <section className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6">
+        <p className="text-sm font-medium text-[var(--foreground-secondary)]">
+          Pollution profile unavailable
+        </p>
+
+        <p className="mt-1 text-xs text-[var(--foreground-muted)]">
+          Current pollutant data could not be loaded.
+        </p>
+      </section>
+    );
+  }
 
   return (
     <motion.section
@@ -280,47 +589,56 @@ export function PollutionDrivers() {
       }}
       transition={{
         duration: 0.5,
-        ease: [0.22, 1, 0.36, 1],
+        ease: [
+          0.22,
+          1,
+          0.36,
+          1,
+        ],
       }}
-      className="overflow-hidden rounded-3xl border border-white/[0.06] bg-[#0F151D]"
+      className="overflow-hidden rounded-3xl border border-[var(--border)] bg-[var(--surface)] transition-colors duration-200"
     >
       <div className="p-5 sm:p-6">
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <p className="text-sm font-medium text-white/80">
-                Pollution drivers
+              <p className="text-sm font-medium text-[var(--foreground-secondary)]">
+                Pollutant profile
               </p>
 
               <HugeiconsIcon
-                icon={InformationCircleIcon}
+                icon={
+                  InformationCircleIcon
+                }
                 size={14}
                 strokeWidth={1.5}
-                className="text-white/20"
+                className="text-[var(--foreground-faint)]"
               />
 
-              <span className="size-1 rounded-full bg-white/15" />
-              <span className="text-[9px] uppercase tracking-[0.12em] text-white/20">
-                Current profile
+              <span className="size-1 rounded-full bg-[var(--foreground-faint)]" />
+
+              <span className="text-[9px] uppercase tracking-[0.12em] text-[var(--foreground-faint)]">
+                Live concentrations
               </span>
             </div>
 
-            <p className="mt-1 text-xs leading-5 text-white/30">
-              Estimated contribution from the pollutants currently
-              measured.
+            <p className="mt-1 text-xs leading-5 text-[var(--foreground-muted)]">
+              Current pollutant concentrations reported by the air-quality service.
             </p>
           </div>
 
-          <div className="w-fit rounded-xl border border-orange-400/10 bg-orange-400/[0.035] px-3 py-2">
-            <p className="text-[9px] font-medium uppercase tracking-[0.12em] text-white/25">
-              Largest contributor
-            </p>
+          {dominantPollutant && (
+            <div className="w-fit rounded-xl border border-orange-400/10 bg-orange-400/[0.035] px-3 py-2">
+              <p className="text-[9px] font-medium uppercase tracking-[0.12em] text-[var(--foreground-subtle)]">
+                AQI driver
+              </p>
 
-            <p className="mt-0.5 text-[11px] font-medium text-orange-300/70">
-              {dominantDriver.pollutant} · {dominantDriver.value}%
-            </p>
-          </div>
+              <p className="mt-0.5 text-[11px] font-medium text-orange-300/70">
+                {data.airQuality.dominantPollutant}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Main */}
@@ -331,57 +649,91 @@ export function PollutionDrivers() {
               ref={chartRef}
               className="absolute inset-0 size-full"
               role="img"
-              aria-label="Estimated pollution contribution by pollutant"
+              aria-label="Relative pollutant concentration profile"
             />
 
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-center">
-              <div>
-                <p className="text-[9px] font-semibold uppercase tracking-[0.17em] text-white/25">
-                  Main driver
-                </p>
+              {activePollutantData && (
+                <div>
+                  <p className="text-[9px] font-semibold uppercase tracking-[0.17em] text-[var(--foreground-subtle)]">
+                    {activePollutant
+                      ? "Selected"
+                      : "AQI driver"}
+                  </p>
 
-                <p
-                  className={`mt-1 text-xl font-semibold tracking-[-0.035em] transition-colors ${
-                    activeDriver
-                      ? "text-white"
-                      : "text-white"
-                  }`}
-                >
-                  {
-                    (
-                      mockPollutionDrivers.find(
-                        (driver) =>
-                          driver.id === activeDriver,
-                      ) ?? dominantDriver
-                    ).pollutant
-                  }
-                </p>
+                  <motion.p
+                    key={
+                      activePollutantData.id
+                    }
+                    initial={{
+                      opacity: 0,
+                      y: 3,
+                    }}
+                    animate={{
+                      opacity: 1,
+                      y: 0,
+                    }}
+                    transition={{
+                      duration: 0.18,
+                    }}
+                    className="mt-1 text-xl font-semibold tracking-[-0.035em] text-[var(--foreground)]"
+                  >
+                    {
+                      activePollutantData.pollutant
+                    }
+                  </motion.p>
 
-                <p className="mt-0.5 text-xs font-medium text-orange-300/70">
-                  {
-                    (
-                      mockPollutionDrivers.find(
-                        (driver) =>
-                          driver.id === activeDriver,
-                      ) ?? dominantDriver
-                    ).value
-                  }
-                  %
-                </p>
-              </div>
+                  <motion.p
+                    key={`${activePollutantData.id}-value`}
+                    initial={{
+                      opacity: 0,
+                    }}
+                    animate={{
+                      opacity: 1,
+                    }}
+                    transition={{
+                      duration: 0.18,
+                    }}
+                    className="mt-0.5 text-xs font-medium text-orange-300/70"
+                  >
+                    {formatNumber(
+                      activePollutantData.concentration,
+                    )}{" "}
+                    µg/m³
+                  </motion.p>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Driver rows */}
+          {/* Pollutant rows */}
           <div className="space-y-3">
-            {mockPollutionDrivers.map(
-              (driver, index) => {
+            {pollutants.map(
+              (pollutant) => {
                 const isActive =
-                  activeDriver === driver.id;
+                  activePollutant ===
+                  pollutant.id;
+
+                const relativeLevel =
+                  Math.max(
+                    6,
+                    Math.min(
+                      100,
+                      (pollutant.concentration /
+                        maximumConcentration) *
+                        100,
+                    ),
+                  );
+
+                const status =
+                  getRelativeStatus(
+                    pollutant.concentration,
+                    maximumConcentration,
+                  );
 
                 return (
                   <motion.div
-                    key={driver.id}
+                    key={pollutant.id}
                     initial={{
                       opacity: 0,
                       x: 8,
@@ -392,97 +744,117 @@ export function PollutionDrivers() {
                     }}
                     transition={{
                       duration: 0.4,
-                      delay: 0.08 + index * 0.06,
-                      ease: [0.22, 1, 0.36, 1],
+                      ease: [
+                        0.22,
+                        1,
+                        0.36,
+                        1,
+                      ],
                     }}
                     onMouseEnter={() =>
-                      handleDriverEnter(driver.id)
+                      handleEnter(
+                        pollutant.id,
+                      )
                     }
                     onMouseLeave={
-                      handleDriverLeave
+                      handleLeave
                     }
                     onFocus={() =>
-                      handleDriverEnter(driver.id)
+                      handleEnter(
+                        pollutant.id,
+                      )
                     }
                     onBlur={
-                      handleDriverLeave
+                      handleLeave
                     }
                     tabIndex={0}
-                    className={`group rounded-2xl border p-4 outline-none transition-all duration-200 ${
+                    className={`group rounded-2xl border p-4 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-[var(--foreground-faint)] ${
                       isActive
-                        ? "border-white/[0.11] bg-white/[0.035]"
-                        : "border-transparent bg-transparent hover:border-white/[0.06] hover:bg-white/[0.02]"
+                        ? "border-[var(--foreground-faint)] bg-[var(--control-hover)]"
+                        : "border-transparent bg-transparent hover:border-[var(--border)] hover:bg-[var(--control-background)]"
                     }`}
                   >
-                    {/* Top row */}
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex min-w-0 items-center gap-2.5">
-                        <span
-                          className="size-2 shrink-0 rounded-full transition-transform duration-200"
+                        <motion.span
+                          animate={{
+                            scale:
+                              isActive
+                                ? 1.35
+                                : 1,
+                          }}
+                          className="size-2 shrink-0 rounded-full"
                           style={{
                             backgroundColor:
-                              DRIVER_COLORS[index],
-                            transform: isActive
-                              ? "scale(1.35)"
-                              : "scale(1)",
+                              pollutant.color,
                           }}
                         />
 
                         <div className="min-w-0">
-                          <p className="text-xs font-medium text-white/65">
-                            {driver.pollutant}
+                          <p className="text-xs font-medium text-[var(--foreground-secondary)]">
+                            {
+                              pollutant.pollutant
+                            }
                           </p>
 
-                          {driver.concentration > 0 && (
-                            <p className="mt-0.5 text-[10px] text-white/25">
-                              {driver.concentration}{" "}
-                              {driver.unit}
-                            </p>
-                          )}
+                          <p className="mt-0.5 text-[10px] text-[var(--foreground-subtle)]">
+                            {pollutant.description}
+                          </p>
                         </div>
                       </div>
 
                       <div className="flex shrink-0 items-center gap-3">
-                        <span className="text-xs font-semibold text-white/75">
-                          {driver.value}%
+                        <span className="text-xs font-semibold text-[var(--foreground-secondary)]">
+                          {formatNumber(
+                            pollutant.concentration,
+                          )}{" "}
+                          µg/m³
                         </span>
 
-                        {index === 0 && (
+                        {pollutant.pollutant ===
+                          data.airQuality
+                            .dominantPollutant && (
                           <span className="rounded-full bg-orange-400/[0.07] px-2 py-1 text-[8px] font-semibold uppercase tracking-[0.1em] text-orange-300/65">
-                            Primary
+                            Driver
                           </span>
                         )}
                       </div>
                     </div>
 
-                    {/* Contribution bar */}
-                    <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/[0.05]">
-                      <motion.div
-                        initial={{
-                          width: 0,
-                        }}
-                        animate={{
-                          width: `${driver.value}%`,
-                        }}
-                        transition={{
-                          duration: 0.75,
-                          delay: 0.15 + index * 0.06,
-                          ease: [0.22, 1, 0.36, 1],
-                        }}
-                        className="h-full rounded-full"
-                        style={{
-                          backgroundColor:
-                            DRIVER_COLORS[index],
-                          opacity: isActive ? 1 : 0.72,
-                        }}
-                      />
-                    </div>
+                    <div className="mt-3 flex items-center gap-3">
+                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--control-hover)]">
+                        <motion.div
+                          initial={{
+                            width: 0,
+                          }}
+                          animate={{
+                            width: `${relativeLevel}%`,
+                          }}
+                          transition={{
+                            duration: 0.7,
+                            ease: [
+                              0.22,
+                              1,
+                              0.36,
+                              1,
+                            ],
+                          }}
+                          className="h-full rounded-full"
+                          style={{
+                            backgroundColor:
+                              pollutant.color,
+                            opacity:
+                              isActive
+                                ? 1
+                                : 0.72,
+                          }}
+                        />
+                      </div>
 
-                    {/* Description */}
-                    <AnimateDescription
-                      description={driver.description}
-                      visible={isActive}
-                    />
+                      <span className="w-14 text-right text-[9px] uppercase tracking-[0.1em] text-[var(--foreground-faint)]">
+                        {status}
+                      </span>
+                    </div>
                   </motion.div>
                 );
               },
@@ -491,65 +863,40 @@ export function PollutionDrivers() {
         </div>
 
         {/* Insight */}
-        <div className="mt-7 border-t border-white/[0.06] pt-5">
-          <div className="flex items-start gap-3">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-orange-400/[0.07]">
-              <HugeiconsIcon
-                icon={Alert02Icon}
-                size={15}
-                strokeWidth={1.5}
-                className="text-orange-300/65"
-              />
-            </div>
+        {dominantPollutant && (
+          <div className="mt-7 border-t border-[var(--border)] pt-5">
+            <div className="flex items-start gap-3">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-orange-400/[0.07]">
+                <HugeiconsIcon
+                  icon={Alert02Icon}
+                  size={15}
+                  strokeWidth={1.5}
+                  className="text-orange-300/65"
+                />
+              </div>
 
-            <div className="min-w-0">
-              <p className="text-xs font-medium text-white/55">
-                What's influencing the current reading?
-              </p>
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-[var(--foreground-secondary)]">
+                  What's influencing the current AQI?
+                </p>
 
-              <p className="mt-1 text-xs leading-5 text-white/30">
-                {dominantDriver.pollutant} is currently the
-                largest contributor in this demonstration profile,
-                accounting for approximately{" "}
-                <span className="font-medium text-white/50">
-                  {dominantDriver.value}%
-                </span>{" "}
-                of the measured pollution mix.
-              </p>
+                <p className="mt-1 text-xs leading-5 text-[var(--foreground-muted)]">
+                  The current AQI data identifies{" "}
+                  <span className="font-medium text-[var(--foreground-secondary)]">
+                    {
+                      data.airQuality
+                        .dominantPollutant
+                    }
+                  </span>{" "}
+                  as the dominant pollutant for this reading.
+                  The chart above compares the live concentrations
+                  reported for each measured pollutant.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </motion.section>
-  );
-}
-
-type AnimateDescriptionProps = {
-  description: string;
-  visible: boolean;
-};
-
-function AnimateDescription({
-  description,
-  visible,
-}: AnimateDescriptionProps) {
-  return (
-    <motion.div
-      initial={false}
-      animate={{
-        height: visible ? "auto" : 0,
-        opacity: visible ? 1 : 0,
-        marginTop: visible ? 8 : 0,
-      }}
-      transition={{
-        duration: 0.2,
-        ease: "easeOut",
-      }}
-      className="overflow-hidden"
-    >
-      <p className="text-[10px] leading-5 text-white/25">
-        {description}
-      </p>
-    </motion.div>
   );
 }
