@@ -7,18 +7,7 @@ import * as echarts from "echarts";
 
 import { useTheme } from "../../../components/theme/ThemeProvider";
 import { useAirScopeData } from "../../../api/useAirScopeData";
-import type { OpenMeteoLocation } from "../../../api/types";
-
-const BENGALURU_LOCATION: OpenMeteoLocation = {
-  id: 1277333,
-  name: "Bengaluru",
-  country: "India",
-  country_code: "IN",
-  admin1: "Karnataka",
-  latitude: 12.9716,
-  longitude: 77.5946,
-  timezone: "Asia/Kolkata",
-};
+import { useLocation } from "../../../context/LocationProvider";
 
 function getThemeColors() {
   const styles = getComputedStyle(
@@ -95,6 +84,7 @@ function getThemeColors() {
 
 function formatChartTime(
   timestamp: string,
+  timezone?: string,
 ) {
   const date = new Date(timestamp);
 
@@ -113,7 +103,7 @@ function formatChartTime(
       minute: "2-digit",
       hour12: true,
       timeZone:
-        "Asia/Kolkata",
+        timezone || "UTC",
     },
   ).format(date);
 }
@@ -189,14 +179,16 @@ export function AQITrendChart() {
   const { theme } =
     useTheme();
 
+  const { location } =
+    useLocation();
+
   const {
     data,
     isLoading,
     isError,
   } =
     useAirScopeData({
-      location:
-        BENGALURU_LOCATION,
+      location,
     });
 
   const trendData =
@@ -416,6 +408,7 @@ export function AQITrendChart() {
                     first.axisValue
                       ? formatChartTime(
                           first.axisValue,
+                          location.timezone
                         )
                       : ""
                   }
@@ -476,6 +469,7 @@ export function AQITrendChart() {
                 0
                 ? formatChartTime(
                     value,
+                    location.timezone
                   )
                 : "";
             },
@@ -802,6 +796,7 @@ export function AQITrendChart() {
               {peakPoint
                 ? formatChartTime(
                     peakPoint.time,
+                    location.timezone
                   )
                 : ""}
             </span>
