@@ -1,17 +1,18 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "motion/react";
 import {
-  LngLatBounds,
   Map,
   Marker,
   NavigationControl,
   Popup,
   setWorkerUrl,
 } from "maplibre-gl";
+
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import "maplibre-gl/dist/maplibre-gl.css";
 
+import { useLocation } from "../../../context/LocationProvider";
 import { getAirQuality } from "../../../api/openMeteo";
 
 setWorkerUrl(workerUrl);
@@ -28,58 +29,8 @@ type AQIMapStatus =
   | "very-unhealthy"
   | "hazardous";
 
-type AirQualityLocation = {
-  id: string;
-  name: string;
-  aqi: number;
-  pm25: number;
-  status: AQIMapStatus;
-  longitude: number;
-  latitude: number;
-};
-
 /* -------------------------------------------------------------------------- */
-/* Monitored locations                                                        */
-/*                                                                            */
-/* These are geographic points only.                                         */
-/* AQI and pollutant values are always fetched from the API.                 */
-/* -------------------------------------------------------------------------- */
-
-const MONITORED_LOCATIONS = [
-  {
-    id: "koramangala",
-    name: "Koramangala",
-    latitude: 12.9352,
-    longitude: 77.6245,
-  },
-  {
-    id: "indiranagar",
-    name: "Indiranagar",
-    latitude: 12.9784,
-    longitude: 77.6412,
-  },
-  {
-    id: "whitefield",
-    name: "Whitefield",
-    latitude: 12.9698,
-    longitude: 77.75,
-  },
-  {
-    id: "hebbal",
-    name: "Hebbal",
-    latitude: 13.0358,
-    longitude: 77.5946,
-  },
-  {
-    id: "electronic-city",
-    name: "Electronic City",
-    latitude: 12.8458,
-    longitude: 77.6648,
-  },
-] as const;
-
-/* -------------------------------------------------------------------------- */
-/* Status configuration                                                       */
+/* Status styles                                                              */
 /* -------------------------------------------------------------------------- */
 
 const STATUS_STYLES: Record<
@@ -158,95 +109,6 @@ function getMapStatus(
 }
 
 /* -------------------------------------------------------------------------- */
-/* API                                                                        */
-/* -------------------------------------------------------------------------- */
-
-async function fetchMapLocation(
-  location: (typeof MONITORED_LOCATIONS)[number],
-): Promise<AirQualityLocation | null> {
-  const response = await getAirQuality(
-    location.latitude,
-    location.longitude,
-    "Asia/Kolkata",
-  );
-
-  const aqi = response.current?.us_aqi;
-  const pm25 = response.current?.pm2_5;
-
-  if (
-    typeof aqi !== "number" ||
-    typeof pm25 !== "number"
-  ) {
-    return null;
-  }
-
-  return {
-    id: location.id,
-    name: location.name,
-    aqi,
-    pm25,
-    status: getMapStatus(aqi),
-    longitude: location.longitude,
-    latitude: location.latitude,
-  };
-}
-
-async function fetchMapLocations(): Promise<
-  AirQualityLocation[]
-> {
-  const results =
-    await Promise.allSettled(
-      MONITORED_LOCATIONS.map(
-        (location) =>
-          fetchMapLocation(location),
-      ),
-    );
-
-  const locations =
-    results
-      .filter(
-        (
-          result,
-        ): result is PromiseFulfilledResult<AirQualityLocation | null> =>
-          result.status === "fulfilled",
-      )
-      .map(
-        (result) => result.value,
-      )
-      .filter(
-        (
-          location,
-        ): location is AirQualityLocation =>
-          location !== null,
-      );
-
-  if (!locations.length) {
-    throw new Error(
-      "No monitored locations returned usable air-quality data.",
-    );
-  }
-
-  console.table(
-    locations.map(
-      (location) => ({
-        location:
-          location.name,
-        aqi: location.aqi,
-        pm25: location.pm25,
-        latitude:
-          location.latitude,
-        longitude:
-          location.longitude,
-        status:
-          location.status,
-      }),
-    ),
-  );
-
-  return locations;
-}
-
-/* -------------------------------------------------------------------------- */
 /* Marker                                                                     */
 /* -------------------------------------------------------------------------- */
 
@@ -254,7 +116,6 @@ function createMarkerElement(
   aqi: number,
   status: AQIMapStatus,
   name: string,
-  onSelect: () => void,
 ) {
   const colors =
     STATUS_STYLES[status];
@@ -265,8 +126,8 @@ function createMarkerElement(
   Object.assign(
     marker.style,
     {
-      width: "50px",
-      height: "50px",
+      width: "64px",
+      height: "64px",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
@@ -285,15 +146,15 @@ function createMarkerElement(
 
   button.setAttribute(
     "aria-label",
-    `View ${name} air quality`,
+    `${name} air quality, AQI ${aqi}`,
   );
 
   Object.assign(
     button.style,
     {
       position: "relative",
-      width: "40px",
-      height: "40px",
+      width: "46px",
+      height: "46px",
       padding: "0",
       margin: "0",
       borderRadius: "999px",
@@ -305,28 +166,46 @@ function createMarkerElement(
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      fontSize: "10px",
+      fontSize: "11px",
       fontWeight: "700",
       fontFamily:
         "Inter, system-ui, sans-serif",
       cursor: "pointer",
-      boxShadow: `0 0 0 4px ${colors.color}18, var(--map-marker-shadow)`,
+      boxShadow: `
+        0 0 0 5px ${colors.color}18,
+        var(--map-marker-shadow)
+      `,
       transition:
         "transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease",
       zIndex: "2",
     },
   );
 
-  const glow =
+  const outerGlow =
     document.createElement("span");
 
   Object.assign(
-    glow.style,
+    outerGlow.style,
+    {
+      position: "absolute",
+      inset: "-7px",
+      borderRadius: "999px",
+      border: `1px solid ${colors.color}20`,
+      pointerEvents: "none",
+    },
+  );
+
+  const innerGlow =
+    document.createElement("span");
+
+  Object.assign(
+    innerGlow.style,
     {
       position: "absolute",
       inset: "4px",
       borderRadius: "999px",
-      background: `radial-gradient(circle at 35% 30%, ${colors.color}35, transparent 70%)`,
+      background:
+        `radial-gradient(circle at 35% 30%, ${colors.color}38, transparent 72%)`,
       pointerEvents: "none",
     },
   );
@@ -345,15 +224,16 @@ function createMarkerElement(
   value.textContent =
     String(aqi);
 
-  button.appendChild(glow);
-  button.appendChild(value);
+  button.appendChild(
+    outerGlow,
+  );
 
-  button.addEventListener(
-    "click",
-    (event) => {
-      event.stopPropagation();
-      onSelect();
-    },
+  button.appendChild(
+    innerGlow,
+  );
+
+  button.appendChild(
+    value,
   );
 
   button.addEventListener(
@@ -365,7 +245,10 @@ function createMarkerElement(
       button.style.background =
         "var(--map-marker-hover)";
 
-      button.style.boxShadow = `0 0 0 6px ${colors.color}24, var(--map-marker-hover-shadow)`;
+      button.style.boxShadow = `
+        0 0 0 7px ${colors.color}24,
+        var(--map-marker-hover-shadow)
+      `;
     },
   );
 
@@ -378,11 +261,16 @@ function createMarkerElement(
       button.style.background =
         "var(--map-marker-background)";
 
-      button.style.boxShadow = `0 0 0 4px ${colors.color}18, var(--map-marker-shadow)`;
+      button.style.boxShadow = `
+        0 0 0 5px ${colors.color}18,
+        var(--map-marker-shadow)
+      `;
     },
   );
 
-  marker.appendChild(button);
+  marker.appendChild(
+    button,
+  );
 
   return marker;
 }
@@ -391,16 +279,24 @@ function createMarkerElement(
 /* Popup                                                                      */
 /* -------------------------------------------------------------------------- */
 
-function createPopup(
-  location: AirQualityLocation,
-) {
+function createPopup({
+  name,
+  country,
+  aqi,
+  pm25,
+  status,
+}: {
+  name: string;
+  country: string;
+  aqi: number;
+  pm25: number;
+  status: AQIMapStatus;
+}) {
   const colors =
-    STATUS_STYLES[
-      location.status
-    ];
+    STATUS_STYLES[status];
 
   return new Popup({
-    offset: 28,
+    offset: 34,
     closeButton: false,
     closeOnClick: true,
     className:
@@ -408,67 +304,79 @@ function createPopup(
   }).setHTML(`
     <div
       style="
-        min-width:180px;
-        font-family:Inter,system-ui,sans-serif;
-        color:var(--foreground);
+        min-width: 190px;
+        font-family: Inter, system-ui, sans-serif;
+        color: var(--foreground);
       "
     >
       <div
         style="
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          gap:12px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
         "
       >
-        <div
-          style="
-            font-size:12px;
-            font-weight:600;
-            color:var(--foreground);
-          "
-        >
-          ${location.name}
+        <div>
+          <div
+            style="
+              font-size: 13px;
+              font-weight: 600;
+              color: var(--foreground);
+            "
+          >
+            ${name}
+          </div>
+
+          <div
+            style="
+              margin-top: 2px;
+              font-size: 9px;
+              color: var(--foreground-subtle);
+            "
+          >
+            ${country}
+          </div>
         </div>
 
         <span
           style="
-            width:7px;
-            height:7px;
-            flex-shrink:0;
-            border-radius:999px;
-            background:${colors.color};
-            box-shadow:0 0 10px ${colors.color}88;
+            width: 7px;
+            height: 7px;
+            flex-shrink: 0;
+            border-radius: 999px;
+            background: ${colors.color};
+            box-shadow: 0 0 10px ${colors.color}88;
           "
         ></span>
       </div>
 
       <div
         style="
-          display:flex;
-          align-items:baseline;
-          gap:6px;
-          margin-top:12px;
+          display: flex;
+          align-items: baseline;
+          gap: 6px;
+          margin-top: 14px;
         "
       >
         <span
           style="
-            font-size:26px;
-            line-height:1;
-            font-weight:700;
-            letter-spacing:-0.05em;
-            color:var(--foreground);
+            font-size: 28px;
+            line-height: 1;
+            font-weight: 700;
+            letter-spacing: -0.05em;
+            color: var(--foreground);
           "
         >
-          ${location.aqi}
+          ${aqi}
         </span>
 
         <span
           style="
-            font-size:9px;
-            color:var(--foreground-subtle);
-            text-transform:uppercase;
-            letter-spacing:0.1em;
+            font-size: 9px;
+            color: var(--foreground-subtle);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
           "
         >
           AQI
@@ -477,16 +385,16 @@ function createPopup(
 
       <div
         style="
-          margin-top:9px;
-          display:inline-flex;
-          padding:4px 7px;
-          border-radius:999px;
-          background:${colors.color}18;
-          color:${colors.text};
-          font-size:9px;
-          font-weight:700;
-          text-transform:uppercase;
-          letter-spacing:0.08em;
+          margin-top: 9px;
+          display: inline-flex;
+          padding: 4px 7px;
+          border-radius: 999px;
+          background: ${colors.color}18;
+          color: ${colors.text};
+          font-size: 9px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
         "
       >
         ${colors.label}
@@ -494,21 +402,21 @@ function createPopup(
 
       <div
         style="
-          display:grid;
-          grid-template-columns:1fr 1fr;
-          gap:8px;
-          margin-top:12px;
-          padding-top:10px;
-          border-top:1px solid var(--border);
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+          margin-top: 13px;
+          padding-top: 11px;
+          border-top: 1px solid var(--border);
         "
       >
         <div>
           <div
             style="
-              color:var(--foreground-subtle);
-              font-size:9px;
-              text-transform:uppercase;
-              letter-spacing:0.08em;
+              color: var(--foreground-subtle);
+              font-size: 9px;
+              text-transform: uppercase;
+              letter-spacing: 0.08em;
             "
           >
             PM2.5
@@ -516,37 +424,37 @@ function createPopup(
 
           <div
             style="
-              margin-top:3px;
-              color:var(--foreground-secondary);
-              font-size:11px;
-              font-weight:600;
+              margin-top: 3px;
+              color: var(--foreground-secondary);
+              font-size: 11px;
+              font-weight: 600;
             "
           >
-            ${location.pm25.toFixed(1)} µg/m³
+            ${pm25.toFixed(1)} µg/m³
           </div>
         </div>
 
         <div>
           <div
             style="
-              color:var(--foreground-subtle);
-              font-size:9px;
-              text-transform:uppercase;
-              letter-spacing:0.08em;
+              color: var(--foreground-subtle);
+              font-size: 9px;
+              text-transform: uppercase;
+              letter-spacing: 0.08em;
             "
           >
-            Status
+            Source
           </div>
 
           <div
             style="
-              margin-top:3px;
-              color:var(--foreground-secondary);
-              font-size:11px;
-              font-weight:600;
+              margin-top: 3px;
+              color: var(--foreground-secondary);
+              font-size: 11px;
+              font-weight: 600;
             "
           >
-            ${colors.label}
+            Live API
           </div>
         </div>
       </div>
@@ -555,7 +463,7 @@ function createPopup(
 }
 
 /* -------------------------------------------------------------------------- */
-/* States                                                                     */
+/* Loading / error                                                            */
 /* -------------------------------------------------------------------------- */
 
 function LoadingOverlay() {
@@ -589,7 +497,7 @@ function ErrorOverlay({
         </p>
 
         <p className="mt-1.5 text-xs leading-5 text-[var(--foreground-muted)]">
-          Live air-quality readings could not be loaded for the monitored areas.
+          Live air-quality readings could not be loaded for this city.
         </p>
 
         <button
@@ -609,26 +517,34 @@ function ErrorOverlay({
 /* -------------------------------------------------------------------------- */
 
 export function AirQualityMap() {
-  const [
-    selectedLocation,
-    setSelectedLocation,
-  ] = useState<string | null>(
-    null,
-  );
+  const mapContainerRef =
+    useRef<HTMLDivElement | null>(
+      null,
+    );
+
+  const { location } =
+    useLocation();
 
   const {
-    data: mapLocations = [],
+    data,
     isLoading,
     isError,
     refetch,
   } = useQuery({
     queryKey: [
       "airScope",
-      "mapLocations",
+      "cityMap",
+      location.id,
     ],
 
-    queryFn:
-      fetchMapLocations,
+    queryFn: async () => {
+      return getAirQuality(
+        location.latitude,
+        location.longitude,
+        location.timezone ??
+          "Asia/Kolkata",
+      );
+    },
 
     staleTime:
       60_000,
@@ -642,86 +558,67 @@ export function AirQualityMap() {
       true,
   });
 
-  const highestAQI =
+  const mapData =
     useMemo(() => {
-      if (!mapLocations.length) {
-        return 0;
-      }
+      const aqi =
+        data?.current?.us_aqi;
 
-      return Math.max(
-        ...mapLocations.map(
-          (location) =>
-            location.aqi,
-        ),
-      );
-    }, [mapLocations]);
+      const pm25 =
+        data?.current?.pm2_5;
 
-  const highestLocation =
-    useMemo(() => {
-      if (!mapLocations.length) {
+      if (
+        typeof aqi !== "number" ||
+        typeof pm25 !== "number"
+      ) {
         return null;
       }
 
-      return mapLocations.find(
-        (location) =>
-          location.aqi ===
-          highestAQI,
-      ) ?? null;
-    }, [
-      highestAQI,
-      mapLocations,
-    ]);
-
-  const selectedLocationData =
-    useMemo(() => {
-      if (!selectedLocation) {
-        return null;
-      }
-
-      return (
-        mapLocations.find(
-          (location) =>
-            location.id ===
-            selectedLocation,
-        ) ?? null
-      );
-    }, [
-      mapLocations,
-      selectedLocation,
-    ]);
+      return {
+        aqi,
+        pm25,
+        status:
+          getMapStatus(aqi),
+      };
+    }, [data]);
 
   useEffect(() => {
     const container =
-      document.getElementById(
-        "airscope-map-container",
-      ) as HTMLDivElement | null;
+      mapContainerRef.current;
 
     if (
       !container ||
-      !mapLocations.length
+      !mapData
     ) {
       return;
     }
 
-    const map = new Map({
-      container,
+    const map =
+      new Map({
+        container,
 
-      style:
-        "https://tiles.openfreemap.org/styles/liberty",
+        style:
+          "https://tiles.openfreemap.org/styles/liberty",
 
-      center: [
-        77.5946,
-        12.9716,
-      ],
+        center: [
+          location.longitude,
+          location.latitude,
+        ],
 
-      zoom: 10.5,
+        /*
+         * City-level view.
+         *
+         * We deliberately do not fit bounds to
+         * neighborhood points anymore because the map
+         * represents the currently selected city.
+         */
+        zoom: 11,
 
-      minZoom: 8,
+        minZoom: 8,
 
-      maxZoom: 16,
+        maxZoom: 16,
 
-      attributionControl: {},
-    });
+        attributionControl: {},
+      });
 
     map.addControl(
       new NavigationControl({
@@ -731,278 +628,258 @@ export function AirQualityMap() {
       "top-right",
     );
 
-    const markers: Marker[] =
-      [];
+    const handleLoad =
+      () => {
+        map.resize();
 
-    const handleLoad = () => {
-      map.resize();
-
-      /* -------------------------------------------------------------------- */
-      /* AQI glow layer                                                       */
-      /* -------------------------------------------------------------------- */
-
-      const geojson = {
-        type: "FeatureCollection" as const,
-
-        features:
-          mapLocations.map(
-            (location) => ({
-              type: "Feature" as const,
-
-              properties: {
-                aqi: location.aqi,
-                status:
-                  location.status,
-                name:
-                  location.name,
-              },
-
-              geometry: {
-                type: "Point" as const,
-
-                coordinates: [
-                  location.longitude,
-                  location.latitude,
-                ],
-              },
-            }),
-          ),
-      };
-
-      map.addSource(
-        "aqi-locations",
-        {
-          type: "geojson",
-          data: geojson,
-        },
-      );
-
-      map.addLayer({
-        id: "aqi-glow",
-
-        type: "circle",
-
-        source:
-          "aqi-locations",
-
-        paint: {
-          "circle-radius": [
-            "interpolate",
-            ["linear"],
-            ["get", "aqi"],
-
-            0,
-            12,
-
-            50,
-            16,
-
-            100,
-            22,
-
-            150,
-            32,
-
-            220,
-            46,
-
-            300,
-            58,
-          ],
-
-          "circle-color": [
-            "match",
-            ["get", "status"],
-
-            "good",
-            "#22c55e",
-
-            "moderate",
-            "#eab308",
-
-            "poor",
-            "#f97316",
-
-            "unhealthy",
-            "#ef4444",
-
-            "very-unhealthy",
-            "#a855f7",
-
-            "hazardous",
-            "#c026d3",
-
-            "#94a3b8",
-          ],
-
-          "circle-opacity":
-            0.11,
-
-          "circle-blur": 1,
-        },
-      });
-
-      /* -------------------------------------------------------------------- */
-      /* AQI core layer                                                       */
-      /* -------------------------------------------------------------------- */
-
-      map.addLayer({
-        id: "aqi-core",
-
-        type: "circle",
-
-        source:
-          "aqi-locations",
-
-        paint: {
-          "circle-radius": [
-            "interpolate",
-            ["linear"],
-            ["get", "aqi"],
-
-            0,
-            4,
-
-            50,
-            5,
-
-            100,
-            7,
-
-            150,
-            9,
-
-            220,
-            11,
-
-            300,
-            13,
-          ],
-
-          "circle-color": [
-            "match",
-            ["get", "status"],
-
-            "good",
-            "#22c55e",
-
-            "moderate",
-            "#eab308",
-
-            "poor",
-            "#f97316",
-
-            "unhealthy",
-            "#ef4444",
-
-            "very-unhealthy",
-            "#a855f7",
-
-            "hazardous",
-            "#c026d3",
-
-            "#94a3b8",
-          ],
-
-          "circle-opacity":
-            0.45,
-
-          "circle-stroke-width":
-            1,
-
-          "circle-stroke-color":
-            "rgba(255,255,255,0.2)",
-        },
-      });
-
-      /* -------------------------------------------------------------------- */
-      /* HTML markers                                                         */
-      /* -------------------------------------------------------------------- */
-
-      const bounds =
-        new LngLatBounds();
-
-      mapLocations.forEach(
-        (location) => {
-          bounds.extend([
-            location.longitude,
-            location.latitude,
-          ]);
-
-          const markerElement =
-            createMarkerElement(
-              location.aqi,
-              location.status,
-              location.name,
-              () => {
-                setSelectedLocation(
-                  location.id,
-                );
-              },
-            );
-
-          const popup =
-            createPopup(
-              location,
-            );
-
-          const marker =
-            new Marker({
-              element:
-                markerElement,
-
-              anchor:
-                "center",
-            })
-              .setLngLat([
-                location.longitude,
-                location.latitude,
-              ])
-              .setPopup(
-                popup,
-              )
-              .addTo(map);
-
-          markers.push(
-            marker,
-          );
-        },
-      );
-
-      /* -------------------------------------------------------------------- */
-      /* Frame monitored locations                                            */
-      /* -------------------------------------------------------------------- */
-
-      if (
-        mapLocations.length >
-          1 &&
-        !bounds.isEmpty()
-      ) {
-        map.fitBounds(
-          bounds,
+        /*
+         * City AQI visualization.
+         *
+         * One point = the currently selected city.
+         */
+        const geojson =
           {
-            padding: 70,
-            maxZoom: 12,
-            duration: 0,
+            type:
+              "FeatureCollection" as const,
+
+            features: [
+              {
+                type:
+                  "Feature" as const,
+
+                properties: {
+                  aqi:
+                    mapData.aqi,
+
+                  status:
+                    mapData.status,
+
+                  name:
+                    location.name,
+                },
+
+                geometry: {
+                  type:
+                    "Point" as const,
+
+                  coordinates: [
+                    location.longitude,
+                    location.latitude,
+                  ],
+                },
+              },
+            ],
+          };
+
+        map.addSource(
+          "city-aqi",
+          {
+            type: "geojson",
+            data: geojson,
           },
         );
-      }
 
-      requestAnimationFrame(
-        () => {
-          map.resize();
-        },
-      );
-    };
+        /*
+         * Soft city glow.
+         */
+        map.addLayer({
+          id: "city-aqi-glow",
 
-    const handleError = (
-      event: unknown,
-    ) => {
-      console.error(
-        "AirScope MapLibre error:",
-        event,
-      );
-    };
+          type: "circle",
+
+          source:
+            "city-aqi",
+
+          paint: {
+            "circle-radius": [
+              "interpolate",
+              ["linear"],
+              ["get", "aqi"],
+
+              0,
+              28,
+
+              50,
+              34,
+
+              100,
+              44,
+
+              150,
+              56,
+
+              200,
+              68,
+
+              300,
+              84,
+            ],
+
+            "circle-color": [
+              "match",
+              ["get", "status"],
+
+              "good",
+              "#22c55e",
+
+              "moderate",
+              "#eab308",
+
+              "poor",
+              "#f97316",
+
+              "unhealthy",
+              "#ef4444",
+
+              "very-unhealthy",
+              "#a855f7",
+
+              "hazardous",
+              "#c026d3",
+
+              "#94a3b8",
+            ],
+
+            "circle-opacity":
+              0.12,
+
+            "circle-blur":
+              1,
+          },
+        });
+
+        /*
+         * More concentrated city indicator.
+         */
+        map.addLayer({
+          id: "city-aqi-core",
+
+          type: "circle",
+
+          source:
+            "city-aqi",
+
+          paint: {
+            "circle-radius": [
+              "interpolate",
+              ["linear"],
+              ["get", "aqi"],
+
+              0,
+              7,
+
+              50,
+              8,
+
+              100,
+              10,
+
+              150,
+              12,
+
+              200,
+              14,
+
+              300,
+              16,
+            ],
+
+            "circle-color": [
+              "match",
+              ["get", "status"],
+
+              "good",
+              "#22c55e",
+
+              "moderate",
+              "#eab308",
+
+              "poor",
+              "#f97316",
+
+              "unhealthy",
+              "#ef4444",
+
+              "very-unhealthy",
+              "#a855f7",
+
+              "hazardous",
+              "#c026d3",
+
+              "#94a3b8",
+            ],
+
+            "circle-opacity":
+              0.42,
+
+            "circle-stroke-width":
+              1,
+
+            "circle-stroke-color":
+              "rgba(255,255,255,0.25)",
+          },
+        });
+
+        /*
+         * City marker.
+         */
+        const markerElement =
+          createMarkerElement(
+            mapData.aqi,
+            mapData.status,
+            location.name,
+          );
+
+        const popup =
+          createPopup({
+            name:
+              location.name,
+
+            country:
+              location.country ??
+              location.country_code ??
+              "Unknown",
+
+            aqi:
+              mapData.aqi,
+
+            pm25:
+              mapData.pm25,
+
+            status:
+              mapData.status,
+        });
+
+        new Marker({
+          element:
+            markerElement,
+
+          anchor:
+            "center",
+        })
+          .setLngLat([
+            location.longitude,
+            location.latitude,
+          ])
+          .setPopup(
+            popup,
+          )
+          .addTo(map);
+
+        requestAnimationFrame(
+          () => {
+            map.resize();
+          },
+        );
+      };
+
+    const handleError =
+      (event: unknown) => {
+        console.error(
+          "AirScope MapLibre error:",
+          event,
+        );
+      };
 
     map.once(
       "load",
@@ -1033,16 +910,12 @@ export function AirQualityMap() {
 
     return () => {
       resizeObserver.disconnect();
-
-      markers.forEach(
-        (marker) => {
-          marker.remove();
-        },
-      );
-
       map.remove();
     };
-  }, [mapLocations]);
+  }, [
+    location,
+    mapData,
+  ]);
 
   return (
     <motion.section
@@ -1067,7 +940,7 @@ export function AirQualityMap() {
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-4 p-5 pb-0 sm:p-6 sm:pb-0">
-        <div>
+        <div className="min-w-0">
           <div className="flex items-center gap-2">
             <p className="text-sm font-medium text-[var(--foreground-secondary)]">
               Air quality map
@@ -1077,19 +950,23 @@ export function AirQualityMap() {
           </div>
 
           <p className="mt-1 text-xs text-[var(--foreground-muted)]">
-            Live modelled air quality across monitored areas
+            Live air quality across {location.name}
           </p>
         </div>
 
-        {highestLocation && (
-          <div className="hidden rounded-xl border border-orange-400/10 bg-orange-400/[0.035] px-3 py-2 text-right sm:block">
+        {mapData && (
+          <div className="hidden shrink-0 rounded-xl border border-orange-400/10 bg-orange-400/[0.035] px-3 py-2 text-right sm:block">
             <p className="text-[9px] font-medium uppercase tracking-[0.12em] text-[var(--foreground-subtle)]">
-              Highest AQI
+              Current AQI
             </p>
 
             <p className="mt-0.5 text-[11px] font-medium text-orange-300/70">
-              {highestLocation.name} ·{" "}
-              {highestAQI}
+              {mapData.aqi} ·{" "}
+              {
+                STATUS_STYLES[
+                  mapData.status
+                ].label
+              }
             </p>
           </div>
         )}
@@ -1098,9 +975,11 @@ export function AirQualityMap() {
       {/* Map */}
       <div className="relative mt-5 min-h-[450px] w-full flex-1">
         <div
-          id="airscope-map-container"
+          ref={
+            mapContainerRef
+          }
           className="absolute inset-0 min-h-[390px]"
-          aria-label="Interactive live modelled air quality map of Bengaluru"
+          aria-label={`Live air quality map of ${location.name}`}
         />
 
         {isLoading && (
@@ -1115,27 +994,17 @@ export function AirQualityMap() {
           />
         )}
 
-        {/* Selected location */}
-        {selectedLocationData && (
-          <motion.div
-            initial={{
-              opacity: 0,
-              y: 4,
-            }}
-            animate={{
-              opacity: 1,
-              y: 0,
-            }}
-            className="pointer-events-none absolute left-3 top-3 rounded-lg border border-[var(--border)] bg-[var(--surface-elevated)]/90 px-2.5 py-1.5 shadow-sm backdrop-blur-md"
-          >
+        {/* Current city */}
+        {mapData && (
+          <div className="pointer-events-none absolute left-3 top-3 rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)]/90 px-3 py-2 shadow-sm backdrop-blur-md">
             <p className="text-[9px] uppercase tracking-[0.1em] text-[var(--foreground-subtle)]">
-              Selected
+              Selected city
             </p>
 
-            <p className="mt-0.5 text-[10px] font-medium text-[var(--foreground-secondary)]">
-              {selectedLocationData.name}
+            <p className="mt-0.5 text-[11px] font-medium text-[var(--foreground-secondary)]">
+              {location.name}
             </p>
-          </motion.div>
+          </div>
         )}
 
         {/* Legend */}
@@ -1147,26 +1016,31 @@ export function AirQualityMap() {
           <span className="mx-0.5 h-3 w-px bg-[var(--border)]" />
 
           <span className="size-1.5 rounded-full bg-emerald-400" />
+
           <span className="text-[9px] text-[var(--foreground-muted)]">
             Good
           </span>
 
           <span className="ml-1 size-1.5 rounded-full bg-yellow-400" />
+
           <span className="text-[9px] text-[var(--foreground-muted)]">
             Moderate
           </span>
 
           <span className="ml-1 size-1.5 rounded-full bg-orange-400" />
+
           <span className="text-[9px] text-[var(--foreground-muted)]">
             Poor
           </span>
 
           <span className="ml-1 size-1.5 rounded-full bg-red-400" />
+
           <span className="text-[9px] text-[var(--foreground-muted)]">
             Unhealthy
           </span>
 
           <span className="ml-1 size-1.5 rounded-full bg-purple-400" />
+
           <span className="text-[9px] text-[var(--foreground-muted)]">
             Very unhealthy
           </span>
@@ -1175,7 +1049,7 @@ export function AirQualityMap() {
         {/* Interaction hint */}
         <div className="pointer-events-none absolute bottom-3 right-3 hidden rounded-lg border border-[var(--border)] bg-[var(--surface-elevated)]/85 px-2.5 py-1.5 shadow-sm backdrop-blur-md sm:block">
           <span className="text-[9px] text-[var(--foreground-subtle)]">
-            Select a location
+            Drag to explore · Scroll to zoom
           </span>
         </div>
       </div>
