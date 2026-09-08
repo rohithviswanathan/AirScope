@@ -4,7 +4,6 @@ import { HugeiconsIcon } from "@hugeicons/react";
 
 import {
   mainNavigation,
-  utilityNavigation,
 } from "../../lib/navigation";
 
 export function Sidebar() {
@@ -245,43 +244,6 @@ export function Sidebar() {
               <span className="h-px flex-1 bg-[var(--border-subtle)]" />
             </div>
           </motion.div>
-        </div>
-
-        {/* ─────────────────────────────────────────────
-            Utility navigation
-        ───────────────────────────────────────────── */}
-        <div className="shrink-0 border-t border-[var(--border)] px-3 py-3">
-          {utilityNavigation.map((item) => (
-            <motion.button
-              key={item.label}
-              type="button"
-              whileHover={{
-                x: 2,
-              }}
-              whileTap={{
-                scale: 0.985,
-              }}
-              transition={{
-                type: "spring",
-                stiffness: 420,
-                damping: 28,
-              }}
-              className="group flex h-10 w-full items-center gap-3 rounded-xl px-3 text-left text-sm text-[var(--foreground-muted)] outline-none transition-colors duration-200 hover:bg-[var(--control-background)] hover:text-[var(--foreground-secondary)] focus-visible:ring-2 focus-visible:ring-[var(--foreground-faint)]"
-            >
-              <HugeiconsIcon
-                icon={item.icon}
-                size={18}
-                strokeWidth={1.5}
-                className="text-[var(--foreground-subtle)] transition-colors duration-200 group-hover:text-[var(--foreground-muted)]"
-              />
-
-              <span>{item.label}</span>
-
-              <span className="ml-auto text-[9px] text-[var(--foreground-faint)] opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                →
-              </span>
-            </motion.button>
-          ))}
         </div>
       </div>
     </aside>
