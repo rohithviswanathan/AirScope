@@ -17,18 +17,7 @@ import {
 
 import { useTheme } from "../../../components/theme/ThemeProvider";
 import { useAirScopeData } from "../../../api/useAirScopeData";
-import type { OpenMeteoLocation } from "../../../api/types";
-
-const BENGALURU_LOCATION: OpenMeteoLocation = {
-  id: 1277333,
-  name: "Bengaluru",
-  country: "India",
-  country_code: "IN",
-  admin1: "Karnataka",
-  latitude: 12.9716,
-  longitude: 77.5946,
-  timezone: "Asia/Kolkata",
-};
+import { useLocation } from "../../../context/LocationProvider";
 
 function getThemeColors() {
   const styles = getComputedStyle(
@@ -91,6 +80,7 @@ function getThemeColors() {
 
 function formatForecastTime(
   timestamp: string,
+  timezone?: string,
 ) {
   const date = new Date(timestamp);
 
@@ -109,7 +99,7 @@ function formatForecastTime(
       minute: "2-digit",
       hour12: true,
       timeZone:
-        "Asia/Kolkata",
+        timezone || "Asia/Kolkata",
     },
   ).format(date);
 }
@@ -126,10 +116,13 @@ export function AirQualityOutlook() {
     );
 
   const reducedMotion =
-    useReducedMotion();
+  useReducedMotion();
 
   const { theme } =
     useTheme();
+
+  const { location } =
+    useLocation();
 
   const {
     data,
@@ -137,8 +130,7 @@ export function AirQualityOutlook() {
     isError,
   } =
     useAirScopeData({
-      location:
-        BENGALURU_LOCATION,
+      location,
     });
 
   const currentAQI =
@@ -390,6 +382,7 @@ export function AirQualityOutlook() {
                     first.axisValue
                       ? formatForecastTime(
                           first.axisValue,
+                          location.timezone,
                         )
                       : ""
                   }
@@ -451,6 +444,7 @@ export function AirQualityOutlook() {
                 0
                 ? formatForecastTime(
                     value,
+                    location.timezone,
                   )
                 : "";
             },
@@ -811,6 +805,7 @@ export function AirQualityOutlook() {
             {highestPoint
               ? `Around ${formatForecastTime(
                   highestPoint.time,
+                  location.timezone,
                 )}`
               : "No peak available"}
           </p>
@@ -934,6 +929,7 @@ export function AirQualityOutlook() {
                     <p className="truncate text-[9px] text-[var(--foreground-subtle)]">
                       {formatForecastTime(
                         point.time,
+                        location.timezone,
                       )}
                     </p>
 
