@@ -6,16 +6,30 @@ import {
 } from "@hugeicons/core-free-icons";
 
 import { AirQualityMap } from "../../map/components/AirQualityMap";
+import { useLocation } from "../../../context/LocationProvider";
 
 export function LocationsPage() {
+  const { location } = useLocation();
+
   return (
     <div className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{
+          opacity: 0,
+          y: 12,
+        }}
+        animate={{
+          opacity: 1,
+          y: 0,
+        }}
         transition={{
           duration: 0.5,
-          ease: [0.22, 1, 0.36, 1],
+          ease: [
+            0.22,
+            1,
+            0.36,
+            1,
+          ],
         }}
       >
         {/* Header */}
@@ -39,12 +53,13 @@ export function LocationsPage() {
               </h1>
 
               <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--foreground-muted)]">
-                Explore current air quality across monitored areas
-                and compare pollution conditions around Bengaluru.
+                Explore current air quality across locations
+                available in the AirScope monitoring view.
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
+              {/* Current location */}
               <div className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--control-background)] px-3 py-2">
                 <HugeiconsIcon
                   icon={Location01Icon}
@@ -53,14 +68,28 @@ export function LocationsPage() {
                   className="text-[var(--foreground-muted)]"
                 />
 
-                <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-[var(--foreground-muted)]">
-                  Bengaluru
-                </span>
+                <div className="flex min-w-0 items-center gap-1.5">
+                  <span className="max-w-[180px] truncate text-[10px] font-medium uppercase tracking-[0.1em] text-[var(--foreground-secondary)]">
+                    {location.name}
+                  </span>
+
+                  {location.country_code && (
+                    <>
+                      <span className="size-0.5 shrink-0 rounded-full bg-[var(--foreground-faint)]" />
+
+                      <span className="text-[9px] uppercase tracking-[0.1em] text-[var(--foreground-subtle)]">
+                        {location.country_code}
+                      </span>
+                    </>
+                  )}
+                </div>
               </div>
 
+              {/* Monitoring state */}
               <div className="flex items-center gap-2 rounded-full border border-emerald-400/10 bg-emerald-400/[0.035] px-3 py-2">
                 <span className="relative flex size-1.5">
                   <span className="absolute size-full animate-ping rounded-full bg-emerald-400/25" />
+
                   <span className="relative size-1.5 rounded-full bg-emerald-400" />
                 </span>
 
@@ -85,7 +114,12 @@ export function LocationsPage() {
           transition={{
             duration: 0.45,
             delay: 0.05,
-            ease: [0.22, 1, 0.36, 1],
+            ease: [
+              0.22,
+              1,
+              0.36,
+              1,
+            ],
           }}
           className="overflow-hidden rounded-3xl border border-[var(--border)] bg-[var(--surface)]"
         >
@@ -101,14 +135,14 @@ export function LocationsPage() {
                 />
               </div>
 
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm font-medium text-[var(--foreground-secondary)]">
                   Air quality monitoring map
                 </p>
 
                 <p className="mt-0.5 text-[10px] text-[var(--foreground-subtle)]">
-                  Select a monitored area to inspect its current
-                  conditions.
+                  View the locations currently represented in the
+                  monitoring network.
                 </p>
               </div>
             </div>
