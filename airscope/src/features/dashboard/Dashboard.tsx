@@ -9,27 +9,13 @@ import {
 } from "@hugeicons/core-free-icons";
 
 import { AQIHero } from "../airquality/components/AQIHero";
-import { AQITrendChart } from "../analytics/components/AQITrendChart";
-import { AirQualityMap } from "../map/components/AirQualityMap";
-import { PollutionDrivers } from "../airquality/components/PollutionDrivers";
-import { AirQualityOutlook } from "../forecast/components/AirQualityOutlook";
 
 import { useAirScopeData } from "../../api/useAirScopeData";
-import type { OpenMeteoLocation } from "../../api/types";
 import type {
   AirScopePollutant,
 } from "../../api/airScopeTypes";
+import { useLocation } from "../../context/LocationProvider";
 
-const BENGALURU_LOCATION: OpenMeteoLocation = {
-  id: 1277333,
-  name: "Bengaluru",
-  country: "India",
-  country_code: "IN",
-  admin1: "Karnataka",
-  latitude: 12.9716,
-  longitude: 77.5946,
-  timezone: "Asia/Kolkata",
-};
 
 const DISPLAY_POLLUTANTS = [
   {
@@ -208,6 +194,8 @@ function DashboardErrorState({
 }
 
 export function Dashboard() {
+  const { location } = useLocation();
+  
   const {
     data,
     isLoading,
@@ -216,7 +204,7 @@ export function Dashboard() {
     error,
     refetch,
   } = useAirScopeData({
-    location: BENGALURU_LOCATION,
+    location,
   });
 
   if (isLoading) {
@@ -708,33 +696,6 @@ export function Dashboard() {
               },
             )}
           </div>
-        </section>
-
-        {/* ─────────────────────────────────────────────
-            Analytics + Map
-        ───────────────────────────────────────────── */}
-        <section className="mt-7 grid gap-4 xl:grid-cols-12 xl:items-stretch">
-          <div className="min-w-0 xl:col-span-7 xl:h-full">
-            <AQITrendChart />
-          </div>
-
-          <div className="min-w-0 xl:col-span-5 xl:h-full">
-            <AirQualityMap />
-          </div>
-        </section>
-
-        {/* ─────────────────────────────────────────────
-            Pollution Drivers
-        ───────────────────────────────────────────── */}
-        <section className="mt-4">
-          <PollutionDrivers />
-        </section>
-
-        {/* ─────────────────────────────────────────────
-            Outlook
-        ───────────────────────────────────────────── */}
-        <section className="mt-4 pb-4">
-          <AirQualityOutlook />
         </section>
       </motion.div>
     </div>
