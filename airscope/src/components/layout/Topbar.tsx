@@ -8,20 +8,21 @@ import {
   Search01Icon,
   Sun03Icon,
 } from "@hugeicons/core-free-icons";
+
 import { useTheme } from "../theme/ThemeProvider";
 
 export function Topbar() {
   const [searchValue, setSearchValue] = useState("");
-  const { theme, toggleTheme } = useTheme();
   const [searchFocused, setSearchFocused] =
     useState(false);
+
+  const { theme, toggleTheme } = useTheme();
 
   const searchInputRef =
     useRef<HTMLInputElement | null>(null);
 
   /*
-   * Command shortcut
-   * Cmd/Ctrl + K focuses the search field.
+   * Cmd/Ctrl + K focuses the search input.
    */
   useEffect(() => {
     const handleShortcut = (
@@ -54,8 +55,15 @@ export function Topbar() {
     searchInputRef.current?.focus();
   };
 
+  const shortcutKey =
+    navigator.platform
+      .toLowerCase()
+      .includes("mac")
+      ? "⌘"
+      : "Ctrl";
+
   return (
-    <header className="relative z-30 hidden h-[76px] shrink-0 items-center border-b border-white/[0.06] bg-[#090E14]/75 px-6 backdrop-blur-xl lg:flex xl:px-8">
+    <header className="relative z-30 hidden h-[76px] shrink-0 items-center border-b border-[var(--border)] bg-[var(--surface-secondary)]/85 px-6 backdrop-blur-xl transition-colors duration-200 lg:flex xl:px-8">
       <div className="flex w-full items-center gap-5">
         {/* ─────────────────────────────────────────────
             Current location
@@ -63,44 +71,44 @@ export function Topbar() {
         <motion.button
           type="button"
           whileTap={{ scale: 0.985 }}
-          className="group flex min-w-0 shrink-0 items-center gap-3 rounded-xl px-2 py-1.5 text-left outline-none transition-colors hover:bg-white/[0.035] focus-visible:ring-2 focus-visible:ring-white/15"
+          className="group flex min-w-0 shrink-0 items-center gap-3 rounded-xl px-2 py-1.5 text-left outline-none transition-colors duration-200 hover:bg-[var(--control-background)] focus-visible:ring-2 focus-visible:ring-[var(--foreground-faint)]"
           aria-label="Current location: Bengaluru, India"
         >
-          <div className="relative flex size-9 shrink-0 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.025] transition-colors duration-200 group-hover:border-white/[0.11] group-hover:bg-white/[0.045]">
+          <div className="relative flex size-9 shrink-0 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--control-background)] transition-colors duration-200 group-hover:border-[var(--foreground-faint)] group-hover:bg-[var(--control-hover)]">
             <HugeiconsIcon
               icon={Location01Icon}
               size={17}
               strokeWidth={1.5}
-              className="text-white/40 transition-colors duration-200 group-hover:text-white/70"
+              className="text-[var(--foreground-muted)] transition-colors duration-200 group-hover:text-[var(--foreground-secondary)]"
             />
 
             {/* Location status */}
             <span className="absolute -right-0.5 -top-0.5 flex size-2">
               <span className="absolute size-full animate-ping rounded-full bg-emerald-400/25" />
 
-              <span className="relative size-2 rounded-full border border-[#090E14] bg-emerald-400" />
+              <span className="relative size-2 rounded-full border border-[var(--surface-secondary)] bg-emerald-400" />
             </span>
           </div>
 
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <p className="truncate text-sm font-medium tracking-[-0.01em] text-white/85">
+              <p className="truncate text-sm font-medium tracking-[-0.01em] text-[var(--foreground-secondary)]">
                 Bengaluru, India
               </p>
 
-              <span className="text-[9px] text-white/15">
+              <span className="text-[9px] font-medium tracking-[0.08em] text-[var(--foreground-faint)]">
                 LOCAL
               </span>
             </div>
 
-            <p className="mt-0.5 text-[10px] text-white/25">
+            <p className="mt-0.5 text-[10px] text-[var(--foreground-subtle)]">
               Current location
             </p>
           </div>
         </motion.button>
 
         {/* Divider */}
-        <div className="h-8 w-px shrink-0 bg-white/[0.06]" />
+        <div className="h-8 w-px shrink-0 bg-[var(--border)]" />
 
         {/* ─────────────────────────────────────────────
             Search
@@ -124,14 +132,14 @@ export function Topbar() {
               transition={{
                 duration: 0.2,
               }}
-              className="pointer-events-none absolute -inset-px rounded-xl bg-white/[0.035] blur-sm"
+              className="pointer-events-none absolute -inset-px rounded-xl bg-[var(--control-hover)] blur-sm"
             />
 
             <div
-              className={`relative flex h-10 items-center overflow-hidden rounded-xl border bg-white/[0.025] transition-colors duration-200 ${
+              className={`relative flex h-10 items-center overflow-hidden rounded-xl border bg-[var(--control-background)] transition-colors duration-200 ${
                 searchFocused
-                  ? "border-white/[0.14] bg-white/[0.04]"
-                  : "border-white/[0.07] hover:border-white/[0.1]"
+                  ? "border-[var(--foreground-faint)] bg-[var(--control-hover)]"
+                  : "border-[var(--border)] hover:border-[var(--foreground-faint)]"
               }`}
             >
               <HugeiconsIcon
@@ -140,8 +148,8 @@ export function Topbar() {
                 strokeWidth={1.5}
                 className={`ml-3.5 shrink-0 transition-colors duration-200 ${
                   searchFocused
-                    ? "text-white/50"
-                    : "text-white/25"
+                    ? "text-[var(--foreground-muted)]"
+                    : "text-[var(--foreground-subtle)]"
                 }`}
               />
 
@@ -162,7 +170,7 @@ export function Topbar() {
                 }
                 placeholder="Search city or location..."
                 aria-label="Search city or location"
-                className="h-full min-w-0 flex-1 bg-transparent px-3 text-sm text-white outline-none placeholder:text-white/25"
+                className="h-full min-w-0 flex-1 bg-transparent px-3 text-sm text-[var(--foreground)] outline-none placeholder:text-[var(--foreground-subtle)]"
               />
 
               {/* Clear */}
@@ -185,7 +193,7 @@ export function Topbar() {
                   }
                   onClick={clearSearch}
                   aria-label="Clear search"
-                  className="mr-1 flex size-7 shrink-0 items-center justify-center rounded-lg text-white/25 transition-colors hover:bg-white/[0.06] hover:text-white/65 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/15"
+                  className="mr-1 flex size-7 shrink-0 items-center justify-center rounded-lg text-[var(--foreground-subtle)] transition-colors hover:bg-[var(--control-hover)] hover:text-[var(--foreground-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--foreground-faint)]"
                 >
                   <HugeiconsIcon
                     icon={Cancel01Icon}
@@ -197,15 +205,8 @@ export function Topbar() {
 
               {/* Shortcut */}
               {!searchValue && (
-                <div className="mr-2 flex shrink-0 items-center gap-1 rounded-md border border-white/[0.07] bg-white/[0.015] px-1.5 py-0.5 text-[9px] text-white/20">
-                  <span>
-                    {navigator.platform
-                      .toLowerCase()
-                      .includes("mac")
-                      ? "⌘"
-                      : "Ctrl"}
-                  </span>
-
+                <div className="mr-2 flex shrink-0 items-center gap-1 rounded-md border border-[var(--border)] bg-[var(--control-background)] px-1.5 py-0.5 text-[9px] text-[var(--foreground-faint)]">
+                  <span>{shortcutKey}</span>
                   <span>K</span>
                 </div>
               )}
@@ -214,7 +215,7 @@ export function Topbar() {
         </div>
 
         {/* Divider */}
-        <div className="h-8 w-px shrink-0 bg-white/[0.06]" />
+        <div className="h-8 w-px shrink-0 bg-[var(--border)]" />
 
         {/* ─────────────────────────────────────────────
             Right actions
@@ -224,9 +225,9 @@ export function Topbar() {
           <motion.div
             whileHover={{
               backgroundColor:
-                "rgba(52,211,153,0.055)",
+                "color-mix(in srgb, #34d399 5.5%, transparent)",
               borderColor:
-                "rgba(52,211,153,0.15)",
+                "color-mix(in srgb, #34d399 15%, transparent)",
             }}
             transition={{
               duration: 0.2,
@@ -239,11 +240,12 @@ export function Topbar() {
               <span className="relative size-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.3)]" />
             </span>
 
-            <span className="text-[10px] font-medium text-emerald-300/65">
+            <span className="text-[10px] font-medium text-emerald-300/70">
               Live data
             </span>
           </motion.div>
 
+          {/* Theme */}
           <motion.button
             type="button"
             whileTap={{ scale: 0.93 }}
@@ -259,7 +261,7 @@ export function Topbar() {
                 ? "Switch to light theme"
                 : "Switch to dark theme"
             }
-            className="flex size-9 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.025] text-white/35 outline-none transition-colors hover:border-white/[0.1] hover:bg-white/[0.05] hover:text-white/70 focus-visible:ring-2 focus-visible:ring-white/15"
+            className="flex size-9 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--control-background)] text-[var(--foreground-muted)] outline-none transition-colors duration-200 hover:border-[var(--foreground-faint)] hover:bg-[var(--control-hover)] hover:text-[var(--foreground-secondary)] focus-visible:ring-2 focus-visible:ring-[var(--foreground-faint)]"
           >
             <AnimatePresence
               mode="wait"
@@ -305,9 +307,9 @@ export function Topbar() {
             type="button"
             whileTap={{ scale: 0.94 }}
             aria-label="Open profile"
-            className="group relative flex size-9 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.045] text-[10px] font-semibold text-white/70 outline-none transition-colors hover:border-white/[0.12] hover:bg-white/[0.07] focus-visible:ring-2 focus-visible:ring-white/15"
+            className="group relative flex size-9 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--control-background)] text-[10px] font-semibold text-[var(--foreground-secondary)] outline-none transition-colors duration-200 hover:border-[var(--foreground-faint)] hover:bg-[var(--control-hover)] focus-visible:ring-2 focus-visible:ring-[var(--foreground-faint)]"
           >
-            <span className="absolute inset-[2px] rounded-[8px] border border-white/[0.035]" />
+            <span className="absolute inset-[2px] rounded-[8px] border border-[var(--border-subtle)]" />
 
             <span className="relative z-10">
               R
@@ -316,7 +318,7 @@ export function Topbar() {
         </div>
       </div>
 
-      {/* Bottom accent */}
+      {/* Search focus accent */}
       <motion.div
         aria-hidden="true"
         initial={{
@@ -330,7 +332,7 @@ export function Topbar() {
         transition={{
           duration: 0.25,
         }}
-        className="pointer-events-none absolute bottom-[-1px] left-1/2 h-px w-40 origin-center -translate-x-1/2 bg-white/20"
+        className="pointer-events-none absolute bottom-[-1px] left-1/2 h-px w-40 origin-center -translate-x-1/2 bg-[var(--foreground-faint)]"
       />
     </header>
   );
