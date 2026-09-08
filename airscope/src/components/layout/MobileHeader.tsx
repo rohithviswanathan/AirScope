@@ -30,8 +30,13 @@ export function MobileHeader({
   }, [searchOpen]);
 
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && searchOpen) {
+    const handleKeyDown = (
+      event: KeyboardEvent,
+    ) => {
+      if (
+        event.key === "Escape" &&
+        searchOpen
+      ) {
         setSearchOpen(false);
         setSearchValue("");
       }
@@ -60,7 +65,7 @@ export function MobileHeader({
 
   return (
     <header
-      className="relative z-30 flex min-h-16 shrink-0 items-center border-b border-white/[0.06] bg-[#090E14]/85 px-4 backdrop-blur-xl lg:hidden"
+      className="relative z-30 flex min-h-16 shrink-0 items-center border-b border-[var(--border)] bg-[var(--surface-secondary)]/90 px-4 backdrop-blur-xl transition-colors duration-200 lg:hidden"
       style={{
         paddingTop:
           "max(0px, env(safe-area-inset-top))",
@@ -73,7 +78,7 @@ export function MobileHeader({
           whileTap={{ scale: 0.94 }}
           onClick={onMenuClick}
           aria-label="Open navigation"
-          className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.025] text-white/50 transition-colors hover:border-white/[0.1] hover:bg-white/[0.05] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
+          className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--control-background)] text-[var(--foreground-muted)] outline-none transition-colors duration-200 hover:border-[var(--foreground-faint)] hover:bg-[var(--control-hover)] hover:text-[var(--foreground-secondary)] focus-visible:ring-2 focus-visible:ring-[var(--foreground-faint)]"
         >
           <HugeiconsIcon
             icon={Menu01Icon}
@@ -84,16 +89,16 @@ export function MobileHeader({
 
         {/* Brand */}
         <div className="flex min-w-0 items-center gap-2.5">
-          <div className="relative flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-[10px] bg-white shadow-[0_0_24px_rgba(255,255,255,0.08)]">
-            <span className="size-2.5 rounded-full bg-[#0A0F15]" />
+          <div className="relative flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-[10px] bg-[var(--foreground)] shadow-[0_0_24px_rgba(0,0,0,0.06)]">
+            <span className="size-2.5 rounded-full bg-[var(--background)]" />
 
-            <span className="absolute size-5 rounded-full border border-[#0A0F15]/15" />
+            <span className="absolute size-5 rounded-full border border-[var(--background)]/15" />
 
-            <span className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black/[0.06]" />
+            <span className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/[0.04]" />
           </div>
 
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold tracking-[-0.025em] text-white">
+            <p className="truncate text-sm font-semibold tracking-[-0.025em] text-[var(--foreground)]">
               AirScope
             </p>
 
@@ -104,14 +109,14 @@ export function MobileHeader({
                 <span className="relative size-1.5 rounded-full bg-emerald-400" />
               </span>
 
-              <span className="text-[9px] font-medium uppercase tracking-[0.11em] text-white/25">
+              <span className="text-[9px] font-medium uppercase tracking-[0.11em] text-[var(--foreground-subtle)]">
                 Live
               </span>
             </div>
           </div>
         </div>
 
-        {/* Search / Location */}
+        {/* Search */}
         <div className="flex shrink-0 items-center gap-2">
           <motion.button
             type="button"
@@ -123,10 +128,10 @@ export function MobileHeader({
                 : "Search locations"
             }
             aria-expanded={searchOpen}
-            className={`flex size-10 items-center justify-center rounded-xl border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 ${
+            className={`flex size-10 items-center justify-center rounded-xl border outline-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-[var(--foreground-faint)] ${
               searchOpen
-                ? "border-white/[0.11] bg-white/[0.07] text-white"
-                : "border-white/[0.06] bg-white/[0.025] text-white/50 hover:border-white/[0.1] hover:bg-white/[0.05] hover:text-white"
+                ? "border-[var(--foreground-faint)] bg-[var(--control-hover)] text-[var(--foreground)]"
+                : "border-[var(--border)] bg-[var(--control-background)] text-[var(--foreground-muted)] hover:border-[var(--foreground-faint)] hover:bg-[var(--control-hover)] hover:text-[var(--foreground-secondary)]"
             }`}
           >
             <AnimatePresence
@@ -134,7 +139,11 @@ export function MobileHeader({
               initial={false}
             >
               <motion.span
-                key={searchOpen ? "close" : "search"}
+                key={
+                  searchOpen
+                    ? "close"
+                    : "search"
+                }
                 initial={{
                   opacity: 0,
                   rotate: -45,
@@ -193,14 +202,14 @@ export function MobileHeader({
               duration: 0.22,
               ease: [0.22, 1, 0.36, 1],
             }}
-            className="absolute inset-x-0 bottom-0 translate-y-full border-b border-white/[0.06] bg-[#090E14]/95 px-4 pb-3 pt-2 shadow-[0_18px_40px_rgba(0,0,0,0.18)] backdrop-blur-xl"
+            className="absolute inset-x-0 bottom-0 translate-y-full border-b border-[var(--border)] bg-[var(--surface-secondary)]/95 px-4 pb-3 pt-2 shadow-[0_18px_40px_rgba(0,0,0,0.12)] backdrop-blur-xl"
           >
             <div className="relative">
               <HugeiconsIcon
                 icon={Search01Icon}
                 size={16}
                 strokeWidth={1.5}
-                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-white/25"
+                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--foreground-subtle)]"
               />
 
               <input
@@ -213,15 +222,18 @@ export function MobileHeader({
                   )
                 }
                 placeholder="Search city or location..."
-                className="h-11 w-full rounded-xl border border-white/[0.07] bg-white/[0.025] pl-10 pr-10 text-sm text-white outline-none placeholder:text-white/25 transition-colors focus:border-white/[0.14] focus:bg-white/[0.04]"
+                aria-label="Search city or location"
+                className="h-11 w-full rounded-xl border border-[var(--border)] bg-[var(--control-background)] pl-10 pr-10 text-sm text-[var(--foreground)] outline-none transition-colors duration-200 placeholder:text-[var(--foreground-subtle)] focus:border-[var(--foreground-faint)] focus:bg-[var(--control-hover)]"
               />
 
               {searchValue && (
                 <button
                   type="button"
-                  onClick={() => setSearchValue("")}
+                  onClick={() =>
+                    setSearchValue("")
+                  }
                   aria-label="Clear search"
-                  className="absolute right-2.5 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded-lg text-white/30 transition-colors hover:bg-white/[0.05] hover:text-white/70"
+                  className="absolute right-2.5 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded-lg text-[var(--foreground-subtle)] transition-colors hover:bg-[var(--control-hover)] hover:text-[var(--foreground-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--foreground-faint)]"
                 >
                   <HugeiconsIcon
                     icon={Cancel01Icon}
@@ -237,10 +249,10 @@ export function MobileHeader({
                 icon={Location01Icon}
                 size={12}
                 strokeWidth={1.5}
-                className="text-white/20"
+                className="text-[var(--foreground-faint)]"
               />
 
-              <span className="text-[10px] text-white/25">
+              <span className="text-[10px] text-[var(--foreground-subtle)]">
                 Search will use your selected location
               </span>
             </div>
