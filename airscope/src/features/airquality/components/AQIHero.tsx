@@ -136,7 +136,11 @@ const statusConfig: Record<
 
 const AQI_MAX = 300;
 
-function clamp(value: number, min: number, max: number) {
+function clamp(
+  value: number,
+  min: number,
+  max: number,
+) {
   return Math.min(Math.max(value, min), max);
 }
 
@@ -148,7 +152,9 @@ function getSeverityPosition(aqi: number) {
   return `${getProgress(aqi) * 100}%`;
 }
 
-export function AQIHero({ data }: AQIHeroProps) {
+export function AQIHero({
+  data,
+}: AQIHeroProps) {
   const reducedMotion = useReducedMotion();
 
   const config = statusConfig[data.status];
@@ -156,10 +162,14 @@ export function AQIHero({ data }: AQIHeroProps) {
   const progress = getProgress(data.aqi);
 
   const radius = 82;
-  const circumference = 2 * Math.PI * radius;
-  const dashOffset = circumference * (1 - progress);
+  const circumference =
+    2 * Math.PI * radius;
 
-  const markerPosition = getSeverityPosition(data.aqi);
+  const dashOffset =
+    circumference * (1 - progress);
+
+  const markerPosition =
+    getSeverityPosition(data.aqi);
 
   return (
     <motion.section
@@ -179,7 +189,7 @@ export function AQIHero({ data }: AQIHeroProps) {
         duration: reducedMotion ? 0 : 0.6,
         ease: [0.22, 1, 0.36, 1],
       }}
-      className="relative overflow-hidden rounded-[28px] border border-white/[0.07] bg-[#101720]"
+      className="relative overflow-hidden rounded-[28px] border border-[var(--border)] bg-[var(--surface-secondary)] transition-colors duration-200"
     >
       {/* Ambient glow */}
       <motion.div
@@ -206,27 +216,29 @@ export function AQIHero({ data }: AQIHeroProps) {
       <div className="relative p-5 sm:p-7 lg:p-8">
         {/* Top row */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          {/* Location */}
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.025]">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--control-background)]">
               <HugeiconsIcon
                 icon={Location01Icon}
                 size={16}
                 strokeWidth={1.5}
-                className="text-white/40"
+                className="text-[var(--foreground-muted)]"
               />
             </div>
 
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-white/80">
+              <p className="truncate text-sm font-medium text-[var(--foreground-secondary)]">
                 {data.city}, {data.country}
               </p>
 
-              <p className="mt-0.5 text-[10px] text-white/25">
+              <p className="mt-0.5 text-[10px] text-[var(--foreground-subtle)]">
                 Current air quality
               </p>
             </div>
           </div>
 
+          {/* Status badge */}
           <AnimatePresence mode="wait">
             <motion.div
               key={data.status}
@@ -274,7 +286,7 @@ export function AQIHero({ data }: AQIHeroProps) {
                 }}
               />
 
-              {/* SVG gauge */}
+              {/* Gauge */}
               <svg
                 viewBox="0 0 220 220"
                 className="absolute inset-0 size-full"
@@ -286,7 +298,8 @@ export function AQIHero({ data }: AQIHeroProps) {
                   cy="110"
                   r={radius}
                   fill="none"
-                  stroke="rgba(255,255,255,0.055)"
+                  stroke="var(--foreground-faint)"
+                  strokeOpacity="0.55"
                   strokeWidth="8"
                 />
 
@@ -296,7 +309,8 @@ export function AQIHero({ data }: AQIHeroProps) {
                   cy="110"
                   r="68"
                   fill="none"
-                  stroke="rgba(255,255,255,0.025)"
+                  stroke="var(--foreground-faint)"
+                  strokeOpacity="0.18"
                   strokeWidth="1"
                 />
 
@@ -317,7 +331,9 @@ export function AQIHero({ data }: AQIHeroProps) {
                     strokeDashoffset: dashOffset,
                   }}
                   transition={{
-                    duration: reducedMotion ? 0 : 1.15,
+                    duration: reducedMotion
+                      ? 0
+                      : 1.15,
                     delay: reducedMotion ? 0 : 0.08,
                     ease: [0.22, 1, 0.36, 1],
                   }}
@@ -328,63 +344,65 @@ export function AQIHero({ data }: AQIHeroProps) {
                 />
 
                 {/* Gauge ticks */}
-                {Array.from({ length: 24 }).map(
-                  (_, index) => {
-                    const angle =
-                      (index / 24) * 360;
+                {Array.from({
+                  length: 24,
+                }).map((_, index) => {
+                  const angle =
+                    (index / 24) * 360;
 
-                    const radians =
-                      (angle * Math.PI) / 180;
+                  const radians =
+                    (angle * Math.PI) / 180;
 
-                    const outerRadius = 98;
-                    const innerRadius =
-                      index % 4 === 0 ? 93 : 95;
+                  const outerRadius = 98;
 
-                    const x1 =
-                      110 +
-                      Math.cos(radians) *
-                        innerRadius;
+                  const innerRadius =
+                    index % 4 === 0 ? 93 : 95;
 
-                    const y1 =
-                      110 +
-                      Math.sin(radians) *
-                        innerRadius;
+                  const x1 =
+                    110 +
+                    Math.cos(radians) *
+                      innerRadius;
 
-                    const x2 =
-                      110 +
-                      Math.cos(radians) *
-                        outerRadius;
+                  const y1 =
+                    110 +
+                    Math.sin(radians) *
+                      innerRadius;
 
-                    const y2 =
-                      110 +
-                      Math.sin(radians) *
-                        outerRadius;
+                  const x2 =
+                    110 +
+                    Math.cos(radians) *
+                      outerRadius;
 
-                    return (
-                      <line
-                        key={index}
-                        x1={x1}
-                        y1={y1}
-                        x2={x2}
-                        y2={y2}
-                        stroke={
-                          index % 4 === 0
-                            ? "rgba(255,255,255,0.15)"
-                            : "rgba(255,255,255,0.07)"
-                        }
-                        strokeWidth={
-                          index % 4 === 0 ? 1.4 : 1
-                        }
-                        strokeLinecap="round"
-                      />
-                    );
-                  },
-                )}
+                  const y2 =
+                    110 +
+                    Math.sin(radians) *
+                      outerRadius;
+
+                  return (
+                    <line
+                      key={index}
+                      x1={x1}
+                      y1={y1}
+                      x2={x2}
+                      y2={y2}
+                      stroke="var(--foreground-faint)"
+                      strokeOpacity={
+                        index % 4 === 0
+                          ? 0.8
+                          : 0.4
+                      }
+                      strokeWidth={
+                        index % 4 === 0 ? 1.4 : 1
+                      }
+                      strokeLinecap="round"
+                    />
+                  );
+                })}
               </svg>
 
               {/* Center value */}
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="mb-1 text-[9px] font-semibold uppercase tracking-[0.22em] text-white/25">
+                <span className="mb-1 text-[9px] font-semibold uppercase tracking-[0.22em] text-[var(--foreground-subtle)]">
                   AQI
                 </span>
 
@@ -410,7 +428,7 @@ export function AQIHero({ data }: AQIHeroProps) {
                       : 0.45,
                     ease: [0.22, 1, 0.36, 1],
                   }}
-                  className="text-[64px] font-semibold leading-none tracking-[-0.08em] text-white sm:text-[70px]"
+                  className="text-[64px] font-semibold leading-none tracking-[-0.08em] text-[var(--foreground)] sm:text-[70px]"
                 >
                   {data.aqi}
                 </motion.span>
@@ -421,7 +439,10 @@ export function AQIHero({ data }: AQIHeroProps) {
                     initial={
                       reducedMotion
                         ? { opacity: 1 }
-                        : { opacity: 0, y: 3 }
+                        : {
+                            opacity: 0,
+                            y: 3,
+                          }
                     }
                     animate={{
                       opacity: 1,
@@ -430,7 +451,10 @@ export function AQIHero({ data }: AQIHeroProps) {
                     exit={
                       reducedMotion
                         ? undefined
-                        : { opacity: 0, y: -3 }
+                        : {
+                            opacity: 0,
+                            y: -3,
+                          }
                     }
                     transition={{
                       duration: reducedMotion
@@ -445,9 +469,9 @@ export function AQIHero({ data }: AQIHeroProps) {
               </div>
             </div>
 
-            {/* Scale */}
+            {/* AQI scale */}
             <div className="mt-2 px-5">
-              <div className="relative h-1.5 overflow-hidden rounded-full bg-white/[0.05]">
+              <div className="relative h-1.5 overflow-hidden rounded-full bg-[var(--control-hover)]">
                 <div className="absolute inset-0 flex">
                   <span className="w-[16.67%] bg-emerald-400/50" />
                   <span className="w-[16.67%] bg-yellow-400/50" />
@@ -458,7 +482,7 @@ export function AQIHero({ data }: AQIHeroProps) {
                 </div>
 
                 <motion.span
-                  className="absolute top-1/2 size-2.5 -translate-y-1/2 -translate-x-1/2 rounded-full border-2 border-[#101720] bg-white shadow-[0_0_10px_rgba(255,255,255,0.35)]"
+                  className="absolute top-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[var(--surface-secondary)] bg-[var(--foreground)] shadow-[0_0_10px_rgba(100,116,139,0.35)]"
                   initial={{
                     left: "0%",
                   }}
@@ -466,13 +490,15 @@ export function AQIHero({ data }: AQIHeroProps) {
                     left: markerPosition,
                   }}
                   transition={{
-                    duration: reducedMotion ? 0 : 0.9,
+                    duration: reducedMotion
+                      ? 0
+                      : 0.9,
                     ease: [0.22, 1, 0.36, 1],
                   }}
                 />
               </div>
 
-              <div className="mt-2 flex justify-between text-[8px] font-medium text-white/20">
+              <div className="mt-2 flex justify-between text-[8px] font-medium text-[var(--foreground-faint)]">
                 <span>0</span>
                 <span>50</span>
                 <span>100</span>
@@ -497,19 +523,19 @@ export function AQIHero({ data }: AQIHeroProps) {
               </span>
             </div>
 
-            <h2 className="mt-3 max-w-2xl text-[clamp(1.6rem,2.6vw,2.5rem)] font-semibold leading-[1.12] tracking-[-0.045em] text-white">
+            <h2 className="mt-3 max-w-2xl text-[clamp(1.6rem,2.6vw,2.5rem)] font-semibold leading-[1.12] tracking-[-0.045em] text-[var(--foreground)]">
               {config.headline}
             </h2>
 
-            <p className="mt-4 max-w-2xl text-sm leading-6 text-white/40">
+            <p className="mt-4 max-w-2xl text-sm leading-6 text-[var(--foreground-muted)]">
               {config.description}
             </p>
 
             {/* Key information */}
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4">
+              <div className="rounded-2xl border border-[var(--border)] bg-[var(--control-background)] p-4">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-[9px] font-semibold uppercase tracking-[0.15em] text-white/25">
+                  <p className="text-[9px] font-semibold uppercase tracking-[0.15em] text-[var(--foreground-subtle)]">
                     Dominant pollutant
                   </p>
 
@@ -518,39 +544,40 @@ export function AQIHero({ data }: AQIHeroProps) {
                   />
                 </div>
 
-                <p className="mt-2 text-lg font-medium tracking-[-0.02em] text-white/80">
+                <p className="mt-2 text-lg font-medium tracking-[-0.02em] text-[var(--foreground-secondary)]">
                   {data.dominantPollutant}
                 </p>
 
-                <p className="mt-1 text-[10px] text-white/25">
+                <p className="mt-1 text-[10px] text-[var(--foreground-subtle)]">
                   Primary contributor
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4">
-                <p className="text-[9px] font-semibold uppercase tracking-[0.15em] text-white/25">
+              <div className="rounded-2xl border border-[var(--border)] bg-[var(--control-background)] p-4">
+                <p className="text-[9px] font-semibold uppercase tracking-[0.15em] text-[var(--foreground-subtle)]">
                   Updated
                 </p>
 
                 <div className="mt-2 flex items-center gap-2">
-                  <span className="text-lg font-medium tracking-[-0.02em] text-white/80">
+                  <span className="text-lg font-medium tracking-[-0.02em] text-[var(--foreground-secondary)]">
                     {data.updatedAt}
                   </span>
 
                   <span className="relative flex size-1.5">
                     <span className="absolute size-full animate-ping rounded-full bg-emerald-400/30" />
+
                     <span className="relative size-1.5 rounded-full bg-emerald-400" />
                   </span>
                 </div>
 
-                <p className="mt-1 text-[10px] text-white/25">
+                <p className="mt-1 text-[10px] text-[var(--foreground-subtle)]">
                   Environmental snapshot
                 </p>
               </div>
             </div>
 
             {/* Guidance */}
-            <div className="mt-4 flex items-start gap-3 rounded-2xl border border-white/[0.05] bg-black/[0.08] p-4">
+            <div className="mt-4 flex items-start gap-3 rounded-2xl border border-[var(--border-subtle)] bg-[var(--control-background)] p-4">
               <div
                 className={`flex size-8 shrink-0 items-center justify-center rounded-xl ${config.softBackground}`}
               >
@@ -563,11 +590,11 @@ export function AQIHero({ data }: AQIHeroProps) {
               </div>
 
               <div className="min-w-0">
-                <p className="text-xs font-medium text-white/55">
+                <p className="text-xs font-medium text-[var(--foreground-secondary)]">
                   Today's guidance
                 </p>
 
-                <p className="mt-1 text-xs leading-5 text-white/30">
+                <p className="mt-1 text-xs leading-5 text-[var(--foreground-muted)]">
                   {config.guidance}
                 </p>
               </div>
@@ -576,22 +603,22 @@ export function AQIHero({ data }: AQIHeroProps) {
         </div>
 
         {/* Bottom environmental context */}
-        <div className="mt-7 flex flex-col gap-3 border-t border-white/[0.06] pt-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-7 flex flex-col gap-3 border-t border-[var(--border)] pt-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-center gap-2">
             <HugeiconsIcon
               icon={WindIcon}
               size={14}
               strokeWidth={1.5}
-              className="shrink-0 text-white/25"
+              className="shrink-0 text-[var(--foreground-subtle)]"
             />
 
-            <p className="text-[10px] leading-5 text-white/25">
+            <p className="text-[10px] leading-5 text-[var(--foreground-subtle)]">
               Air quality changes with weather, wind, emissions
               and other environmental conditions.
             </p>
           </div>
 
-          <p className="shrink-0 text-[9px] font-medium uppercase tracking-[0.12em] text-white/15">
+          <p className="shrink-0 text-[9px] font-medium uppercase tracking-[0.12em] text-[var(--foreground-faint)]">
             Live environmental snapshot
           </p>
         </div>
