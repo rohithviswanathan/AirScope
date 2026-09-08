@@ -9,18 +9,22 @@ import {
 export const mainNavigation = [
   {
     label: "Overview",
+    path: "/overview",
     icon: Home01Icon,
   },
   {
     label: "Analytics",
+    path: "/analytics",
     icon: ChartLineData01Icon,
   },
   {
     label: "Forecast",
+    path: "/forecast",
     icon: Activity01Icon,
   },
   {
     label: "Locations",
+    path: "/locations",
     icon: Location01Icon,
   },
 ];
