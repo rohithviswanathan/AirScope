@@ -14,18 +14,7 @@ import {
 
 import { useTheme } from "../../../components/theme/ThemeProvider";
 import { useAirScopeData } from "../../../api/useAirScopeData";
-import type { OpenMeteoLocation } from "../../../api/types";
-
-const BENGALURU_LOCATION: OpenMeteoLocation = {
-  id: 1277333,
-  name: "Bengaluru",
-  country: "India",
-  country_code: "IN",
-  admin1: "Karnataka",
-  latitude: 12.9716,
-  longitude: 77.5946,
-  timezone: "Asia/Kolkata",
-};
+import { useLocation } from "../../../context/LocationProvider";
 
 const POLLUTANT_COLORS = [
   "#F97316",
@@ -151,12 +140,14 @@ export function PollutionDrivers() {
 
   const { theme } = useTheme();
 
+  const { location } = useLocation();
+
   const {
     data,
     isLoading,
     isError,
   } = useAirScopeData({
-    location: BENGALURU_LOCATION,
+    location,
   });
 
   const pollutants = useMemo(() => {
