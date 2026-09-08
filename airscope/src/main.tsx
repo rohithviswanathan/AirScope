@@ -6,13 +6,16 @@ import App from "./App";
 import "./index.css";
 
 import { ThemeProvider } from "./components/theme/ThemeProvider";
+import { LocationProvider } from "./context/LocationProvider";
 import { queryClient } from "./lib/queryClient";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <App />
+        <LocationProvider>
+          <App />
+        </LocationProvider>
       </ThemeProvider>
     </QueryClientProvider>
   </StrictMode>,
