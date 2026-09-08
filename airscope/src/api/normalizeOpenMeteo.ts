@@ -142,6 +142,7 @@ function normalizeWeather(
 
     /*
      * Open-Meteo returns visibility in metres.
+     * AirScope displays kilometres.
      */
     visibility:
       (current?.visibility ?? 0) / 1000,
@@ -151,6 +152,14 @@ function normalizeWeather(
   };
 }
 
+/*
+ * Normalize current pollutant concentrations together
+ * with their individual US AQI values.
+ *
+ * The AQI values are what we use to determine the
+ * dominant pollutant. Concentrations are only used
+ * for the visual concentration profile.
+ */
 function getCurrentPollutants(
   airQuality: OpenMeteoAirQualityResponse,
 ): AirScopePollutant[] {
@@ -163,32 +172,55 @@ function getCurrentPollutants(
   const definitions = [
     {
       pollutant: "PM2.5",
-      value: current.pm2_5,
+      concentration:
+        current.pm2_5,
+      aqi:
+        current.us_aqi_pm2_5,
       unit: "µg/m³",
     },
+
     {
       pollutant: "PM10",
-      value: current.pm10,
+      concentration:
+        current.pm10,
+      aqi:
+        current.us_aqi_pm10,
       unit: "µg/m³",
     },
+
     {
       pollutant: "NO₂",
-      value: current.nitrogen_dioxide,
+      concentration:
+        current.nitrogen_dioxide,
+      aqi:
+        current.us_aqi_nitrogen_dioxide,
       unit: "µg/m³",
     },
+
     {
       pollutant: "O₃",
-      value: current.ozone,
+      concentration:
+        current.ozone,
+      aqi:
+        current.us_aqi_ozone,
       unit: "µg/m³",
     },
+
     {
       pollutant: "SO₂",
-      value: current.sulphur_dioxide,
+      concentration:
+        current.sulphur_dioxide,
+      aqi:
+        current.us_aqi_sulphur_dioxide,
       unit: "µg/m³",
     },
+
     {
       pollutant: "CO",
-      value: current.carbon_monoxide,
+      concentration:
+        current.carbon_monoxide,
+      aqi:
+        current.us_aqi_carbon_monoxide,
       unit: "µg/m³",
     },
   ];
@@ -199,23 +231,50 @@ function getCurrentPollutants(
         pollutant.pollutant,
       ),
 
-      pollutant: pollutant.pollutant,
+      pollutant:
+        pollutant.pollutant,
 
-      value: pollutant.value,
+      /*
+       * Preserve concentration as the main value
+       * used by the pollutant profile UI.
+       */
+      value:
+        pollutant.concentration,
 
       concentration:
-        pollutant.value,
+        pollutant.concentration,
 
-      unit: pollutant.unit,
+      unit:
+        pollutant.unit,
 
       description:
         getPollutantDescription(
           pollutant.pollutant,
         ),
+
+      /*
+       * Individual US AQI contribution.
+       */
+      aqi:
+        pollutant.aqi,
     }),
   );
 }
 
+/*
+ * Determine the actual AQI driver.
+ *
+ * IMPORTANT:
+ * We compare pollutant AQI values, NOT raw concentrations.
+ *
+ * For example:
+ *
+ * CO = 500 µg/m³
+ * PM2.5 = 15 µg/m³
+ *
+ * does NOT mean CO is the AQI driver simply because
+ * 500 is numerically larger than 15.
+ */
 function getDominantPollutant(
   pollutants: AirScopePollutant[],
 ): string {
@@ -223,28 +282,16 @@ function getDominantPollutant(
     return "Unknown";
   }
 
-  /*
-   * Temporary frontend rule.
-   *
-   * This will be replaced later with a
-   * proper contribution calculation.
-   */
-  const pm25 = pollutants.find(
-    (pollutant) =>
-      pollutant.pollutant === "PM2.5",
-  );
+  const dominant =
+    pollutants.reduce(
+      (highest, pollutant) =>
+        pollutant.aqi >
+        highest.aqi
+          ? pollutant
+          : highest,
+    );
 
-  if (pm25) {
-    return pm25.pollutant;
-  }
-
-  return pollutants.reduce(
-    (highest, pollutant) =>
-      pollutant.concentration >
-      highest.concentration
-        ? pollutant
-        : highest,
-  ).pollutant;
+  return dominant.pollutant;
 }
 
 function normalizeCurrentAirQuality(
@@ -254,7 +301,9 @@ function normalizeCurrentAirQuality(
     airQuality.current?.us_aqi ?? 0;
 
   const pollutants =
-    getCurrentPollutants(airQuality);
+    getCurrentPollutants(
+      airQuality,
+    );
 
   return {
     aqi: currentAQI,
@@ -289,6 +338,7 @@ function normalizeTrend(
   return airQuality.hourly.time
     .map((time, index) => ({
       time,
+
       aqi:
         airQuality.hourly.us_aqi[
           index
@@ -316,6 +366,7 @@ function normalizeForecast(
   return airQuality.hourly.time
     .map((time, index) => ({
       time,
+
       aqi:
         airQuality.hourly.us_aqi[
           index
@@ -348,7 +399,9 @@ export function normalizeOpenMeteo(
       ),
 
     trend:
-      normalizeTrend(airQuality),
+      normalizeTrend(
+        airQuality,
+      ),
 
     forecast:
       normalizeForecast(
