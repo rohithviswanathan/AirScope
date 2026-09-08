@@ -9,7 +9,6 @@ import { Topbar } from "./Topbar";
 import { MobileHeader } from "./MobileHeader";
 import {
   mainNavigation,
-  utilityNavigation,
 } from "../../lib/navigation";
 
 type AppShellProps = {
@@ -152,6 +151,54 @@ export function AppShell({
               {children}
             </div>
           </main>
+
+          {/* Data attribution */}
+          <footer className="shrink-0 border-t border-[var(--border)] bg-[var(--surface-secondary)] px-4 py-3">
+            <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center">
+              <span className="text-[10px] text-[var(--foreground-subtle)]">
+                Weather and air quality data by
+              </span>
+
+              <a
+                href="https://open-meteo.com/"
+                target="_blank"
+                rel="noreferrer"
+                className="text-[10px] font-medium text-[var(--foreground-muted)] underline underline-offset-2 transition-colors hover:text-[var(--foreground-secondary)]"
+              >
+                Open-Meteo
+              </a>
+
+              <span className="text-[10px] text-[var(--foreground-faint)]">
+                ·
+              </span>
+
+              <span className="text-[10px] text-[var(--foreground-subtle)]">
+                Air quality forecasts by
+              </span>
+
+              <a
+                href="https://atmosphere.copernicus.eu/"
+                target="_blank"
+                rel="noreferrer"
+                className="text-[10px] font-medium text-[var(--foreground-muted)] underline underline-offset-2 transition-colors hover:text-[var(--foreground-secondary)]"
+              >
+                CAMS
+              </a>
+
+              <span className="text-[10px] text-[var(--foreground-faint)]">
+                ·
+              </span>
+
+              <a
+                href="https://creativecommons.org/licenses/by/4.0/"
+                target="_blank"
+                rel="noreferrer"
+                className="text-[10px] text-[var(--foreground-subtle)] underline underline-offset-2 transition-colors hover:text-[var(--foreground-secondary)]"
+              >
+                CC BY 4.0
+              </a>
+            </div>
+          </footer>
         </div>
       </div>
 
@@ -368,25 +415,6 @@ export function AppShell({
 
               {/* Bottom area */}
               <div className="shrink-0 border-t border-[var(--border)] p-3">
-                {utilityNavigation.map(
-                  (item) => (
-                    <button
-                      key={item.label}
-                      type="button"
-                      className="group flex h-11 w-full items-center gap-3 rounded-xl px-3 text-sm text-[var(--foreground-muted)] transition-colors hover:bg-[var(--control-background)] hover:text-[var(--foreground-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--foreground-faint)]"
-                    >
-                      <HugeiconsIcon
-                        icon={item.icon}
-                        size={18}
-                        strokeWidth={1.5}
-                        className="text-[var(--foreground-subtle)] transition-colors group-hover:text-[var(--foreground-muted)]"
-                      />
-
-                      <span>{item.label}</span>
-                    </button>
-                  ),
-                )}
-
                 {/* System status */}
                 <div className="mt-3 rounded-2xl border border-[var(--border)] bg-[var(--control-background)] p-4">
                   <div className="flex items-center gap-2">
