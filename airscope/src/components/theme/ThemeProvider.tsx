@@ -44,11 +44,7 @@ export function ThemeProvider({
   children: React.ReactNode;
 }) {
   const [theme, setTheme] =
-    useState<Theme>("dark");
-
-  useEffect(() => {
-    setTheme(getInitialTheme());
-  }, []);
+    useState<Theme>(getInitialTheme);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -59,16 +55,17 @@ export function ThemeProvider({
     localStorage.setItem(STORAGE_KEY, theme);
   }, [theme]);
 
-  const value = useMemo(
+  const value = useMemo<ThemeContextValue>(
     () => ({
       theme,
       setTheme,
-      toggleTheme: () =>
+      toggleTheme: () => {
         setTheme((currentTheme) =>
           currentTheme === "dark"
             ? "light"
             : "dark",
-        ),
+        );
+      },
     }),
     [theme],
   );
