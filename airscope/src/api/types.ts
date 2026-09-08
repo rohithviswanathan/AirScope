@@ -10,47 +10,81 @@ export type OpenMeteoAirQualityResponse = {
   current_units?: {
     time: string;
     interval: string;
+
     pm2_5: string;
     pm10: string;
     carbon_monoxide: string;
     nitrogen_dioxide: string;
     sulphur_dioxide: string;
     ozone: string;
+
     us_aqi: string;
+    us_aqi_pm2_5: string;
+    us_aqi_pm10: string;
+    us_aqi_carbon_monoxide: string;
+    us_aqi_nitrogen_dioxide: string;
+    us_aqi_sulphur_dioxide: string;
+    us_aqi_ozone: string;
   };
 
   current?: {
     time: string;
     interval: number;
+
     pm2_5: number;
     pm10: number;
     carbon_monoxide: number;
     nitrogen_dioxide: number;
     sulphur_dioxide: number;
     ozone: number;
+
     us_aqi: number;
+
+    us_aqi_pm2_5: number;
+    us_aqi_pm10: number;
+    us_aqi_carbon_monoxide: number;
+    us_aqi_nitrogen_dioxide: number;
+    us_aqi_sulphur_dioxide: number;
+    us_aqi_ozone: number;
   };
 
   hourly_units: {
     time: string;
+
     pm2_5: string;
     pm10: string;
     carbon_monoxide: string;
     nitrogen_dioxide: string;
     sulphur_dioxide: string;
     ozone: string;
+
     us_aqi: string;
+    us_aqi_pm2_5: string;
+    us_aqi_pm10: string;
+    us_aqi_carbon_monoxide: string;
+    us_aqi_nitrogen_dioxide: string;
+    us_aqi_sulphur_dioxide: string;
+    us_aqi_ozone: string;
   };
 
   hourly: {
     time: string[];
+
     pm2_5: Array<number | null>;
     pm10: Array<number | null>;
     carbon_monoxide: Array<number | null>;
     nitrogen_dioxide: Array<number | null>;
     sulphur_dioxide: Array<number | null>;
     ozone: Array<number | null>;
+
     us_aqi: Array<number | null>;
+
+    us_aqi_pm2_5: Array<number | null>;
+    us_aqi_pm10: Array<number | null>;
+    us_aqi_carbon_monoxide: Array<number | null>;
+    us_aqi_nitrogen_dioxide: Array<number | null>;
+    us_aqi_sulphur_dioxide: Array<number | null>;
+    us_aqi_ozone: Array<number | null>;
   };
 };
 
