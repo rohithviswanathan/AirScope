@@ -35,6 +35,7 @@ export type AirScopePollutant = {
   concentration: number;
   unit: string;
   description: string;
+  aqi: number;
 };
 
 export type AirScopeCurrentAirQuality = {
