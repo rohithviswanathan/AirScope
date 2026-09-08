@@ -12,6 +12,5 @@ export type AQIHeroData = {
   aqi: number;
   status: AirQualityStatus;
   dominantPollutant: string;
-  guidance: string;
   updatedAt: string;
 };
