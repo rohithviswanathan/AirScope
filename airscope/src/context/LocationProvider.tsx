@@ -10,9 +10,7 @@ import type { OpenMeteoLocation } from "../api/types";
 
 type LocationContextValue = {
   location: OpenMeteoLocation;
-  setLocation: (
-    location: OpenMeteoLocation,
-  ) => void;
+  setLocation: (location: OpenMeteoLocation) => void;
 };
 
 const DEFAULT_LOCATION: OpenMeteoLocation = {
@@ -26,30 +24,20 @@ const DEFAULT_LOCATION: OpenMeteoLocation = {
   timezone: "Asia/Kolkata",
 };
 
-const LOCATION_STORAGE_KEY =
-  "airscope-selected-location";
+const LOCATION_STORAGE_KEY = "airscope-selected-location";
 
-const LocationContext =
-  createContext<LocationContextValue | null>(
-    null,
-  );
+const LocationContext = createContext<LocationContextValue | null>(null);
 
 /*
  * Make sure data restored from localStorage actually
  * looks like an OpenMeteoLocation before using it.
  */
-function isValidLocation(
-  value: unknown,
-): value is OpenMeteoLocation {
-  if (
-    !value ||
-    typeof value !== "object"
-  ) {
+function isValidLocation(value: unknown): value is OpenMeteoLocation {
+  if (!value || typeof value !== "object") {
     return false;
   }
 
-  const location =
-    value as Partial<OpenMeteoLocation>;
+  const location = value as Partial<OpenMeteoLocation>;
 
   return (
     typeof location.id === "number" &&
@@ -68,114 +56,72 @@ function isValidLocation(
  * - localStorage is unavailable
  */
 function getInitialLocation(): OpenMeteoLocation {
-  if (
-    typeof window === "undefined"
-  ) {
+  if (typeof window === "undefined") {
     return DEFAULT_LOCATION;
   }
 
   try {
-    const stored =
-      window.localStorage.getItem(
-        LOCATION_STORAGE_KEY,
-      );
+    const stored = window.localStorage.getItem(LOCATION_STORAGE_KEY);
 
     if (!stored) {
       return DEFAULT_LOCATION;
     }
 
-    const parsed =
-      JSON.parse(stored);
+    const parsed = JSON.parse(stored);
 
-    if (
-      isValidLocation(parsed)
-    ) {
+    if (isValidLocation(parsed)) {
       return parsed;
     }
 
-    window.localStorage.removeItem(
-      LOCATION_STORAGE_KEY,
-    );
+    window.localStorage.removeItem(LOCATION_STORAGE_KEY);
   } catch (error) {
-    console.error(
-      "AirScope: failed to restore selected location.",
-      error,
-    );
+    console.error("AirScope: failed to restore selected location.", error);
   }
 
   return DEFAULT_LOCATION;
 }
 
-export function LocationProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function LocationProvider({ children }: { children: React.ReactNode }) {
   const [location, setLocationState] =
-    useState<OpenMeteoLocation>(
-      getInitialLocation,
-    );
+    useState<OpenMeteoLocation>(getInitialLocation);
 
   /*
    * Update React state and persist the same location
    * so it survives page refreshes.
    */
-  const setLocation = useCallback(
-    (
-      nextLocation: OpenMeteoLocation,
-    ) => {
-      setLocationState(
-        nextLocation,
-      );
+  const setLocation = useCallback((nextLocation: OpenMeteoLocation) => {
+    setLocationState(nextLocation);
 
-      try {
-        window.localStorage.setItem(
-          LOCATION_STORAGE_KEY,
-          JSON.stringify(
-            nextLocation,
-          ),
-        );
-      } catch (error) {
-        console.error(
-          "AirScope: failed to save selected location.",
-          error,
-        );
-      }
-    },
-    [],
+    try {
+      window.localStorage.setItem(
+        LOCATION_STORAGE_KEY,
+        JSON.stringify(nextLocation),
+      );
+    } catch (error) {
+      console.error("AirScope: failed to save selected location.", error);
+    }
+  }, []);
+
+  const value = useMemo(
+    () => ({
+      location,
+      setLocation,
+    }),
+    [location, setLocation],
   );
 
-  const value =
-    useMemo(
-      () => ({
-        location,
-        setLocation,
-      }),
-      [
-        location,
-        setLocation,
-      ],
-    );
-
   return (
-    <LocationContext.Provider
-      value={value}
-    >
+    <LocationContext.Provider value={value}>
       {children}
     </LocationContext.Provider>
   );
 }
 
 export function useLocation() {
-  const context =
-    useContext(
-      LocationContext,
-    );
+  const context = useContext(LocationContext);
 
   if (!context) {
-    throw new Error(
-      "useLocation must be used within LocationProvider",
-    );
+    throw new Error("useLocation must be used within LocationProvider");
   }
 
   return context;
