@@ -12,65 +12,135 @@
 
   color-scheme: dark;
 
-  --background: #080c11;
-  --surface: #0f151d;
-  --surface-secondary: #101720;
-  --surface-elevated: #151d27;
+  /* ─────────────────────────────────────────────
+     Dark Mode - Deep space with vibrant accents
+     Optimized for visibility and elegance
+  ───────────────────────────────────────────── */
+  
+  /* Backgrounds - Deep, rich, professional */
+  --background: #0a0e1a;
+  --surface: #121826;
+  --surface-secondary: #131a2a;
+  --surface-elevated: #1a2336;
 
-  --foreground: #f4f7fa;
-  --foreground-secondary: rgba(244, 247, 250, 0.72);
-  --foreground-muted: rgba(244, 247, 250, 0.4);
-  --foreground-subtle: rgba(244, 247, 250, 0.25);
-  --foreground-faint: rgba(244, 247, 250, 0.15);
+  /* Foreground - High contrast for readability */
+  --foreground: #f0f4ff;
+  --foreground-secondary: rgba(240, 244, 255, 0.82);
+  --foreground-muted: rgba(240, 244, 255, 0.58);
+  --foreground-subtle: rgba(240, 244, 255, 0.42);
+  --foreground-faint: rgba(240, 244, 255, 0.26);
 
-  --border: rgba(255, 255, 255, 0.07);
-  --border-subtle: rgba(255, 255, 255, 0.05);
+  /* Borders - Visible but subtle (slate-based) */
+  --border: rgba(148, 163, 184, 0.14);
+  --border-subtle: rgba(148, 163, 184, 0.08);
+  --border-hover: rgba(148, 163, 184, 0.22);
 
-  --control-background: rgba(255, 255, 255, 0.025);
-  --control-hover: rgba(255, 255, 255, 0.05);
+  /* Controls - More visible in dark mode */
+  --control-background: rgba(148, 163, 184, 0.08);
+  --control-hover: rgba(148, 163, 184, 0.14);
+  --control-active: rgba(59, 130, 246, 0.18);
 
-  --chart-grid: rgba(255, 255, 255, 0.045);
+  /* Accent colors - Vibrant indigo/sky palette */
+  --accent-primary: #818cf8;
+  --accent-primary-deep: #6366f1;
+  --accent-secondary: #38bdf8;
+  --accent-tertiary: #a78bfa;
+  --accent-glow: rgba(99, 102, 241, 0.20);
+
+  /* Semantic colors */
+  --success: #34d399;
+  --success-bg: rgba(52, 211, 153, 0.12);
+  --warning: #fbbf24;
+  --warning-bg: rgba(251, 191, 36, 0.12);
+  --error: #f87171;
+  --error-bg: rgba(248, 113, 113, 0.12);
+
+  /* Charts and data */
+  --chart-grid: rgba(148, 163, 184, 0.06);
 
   /* Map */
-  --map-control-background: rgba(15, 21, 29, 0.92);
-  --map-popup-background: #111922;
-  --map-popup-shadow: rgba(0, 0, 0, 0.35);
+  --map-control-background: rgba(18, 24, 38, 0.92);
+  --map-popup-background: #1a2336;
+  --map-popup-shadow: rgba(0, 0, 0, 0.4);
+  --map-marker-background: #1a2336;
+  --map-marker-hover: #202b44;
+  --map-marker-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  --map-marker-hover-shadow: 0 10px 26px rgba(0, 0, 0, 0.5);
 
-  /* AQI semantic colors */
-  --aqi-good: #22c55e;
-  --aqi-moderate: #eab308;
+  /* AQI colors - Vibrant for dark mode */
+  --aqi-good: #34d399;
+  --aqi-moderate: #fbbf24;
   --aqi-sensitive: #f59e0b;
-  --aqi-unhealthy: #f97316;
-  --aqi-very-unhealthy: #ef4444;
-  --aqi-hazardous: #a855f7;
+  --aqi-unhealthy: #fb923c;
+  --aqi-very-unhealthy: #f87171;
+  --aqi-hazardous: #c084fc;
 }
 
 :root[data-theme="light"] {
   color-scheme: light;
 
-  --background: #f3f6f8;
+  /* ─────────────────────────────────────────────
+     Light Mode - Clean with rich accents
+     Optimized for contrast and professionalism
+  ───────────────────────────────────────────── */
+  
+  /* Backgrounds - Clean, bright, professional */
+  --background: #fafbff;
   --surface: #ffffff;
-  --surface-secondary: #f8fafc;
-  --surface-elevated: #eef2f5;
+  --surface-secondary: #f8faff;
+  --surface-elevated: #ffffff;
 
-  --foreground: #17212b;
-  --foreground-secondary: rgba(23, 33, 43, 0.78);
-  --foreground-muted: rgba(23, 33, 43, 0.52);
-  --foreground-subtle: rgba(23, 33, 43, 0.38);
-  --foreground-faint: rgba(23, 33, 43, 0.2);
+  /* Foreground - Deep for contrast */
+  --foreground: #0f172a;
+  --foreground-secondary: rgba(15, 23, 42, 0.82);
+  --foreground-muted: rgba(15, 23, 42, 0.62);
+  --foreground-subtle: rgba(15, 23, 42, 0.45);
+  --foreground-faint: rgba(15, 23, 42, 0.28);
 
-  --border: rgba(15, 23, 42, 0.1);
-  --border-subtle: rgba(15, 23, 42, 0.065);
+  /* Borders - Visible but elegant (slate-based) */
+  --border: rgba(148, 163, 184, 0.18);
+  --border-subtle: rgba(148, 163, 184, 0.10);
+  --border-hover: rgba(148, 163, 184, 0.28);
 
-  --control-background: rgba(15, 23, 42, 0.035);
-  --control-hover: rgba(15, 23, 42, 0.065);
+  /* Controls - More visible in light mode */
+  --control-background: rgba(148, 163, 184, 0.06);
+  --control-hover: rgba(148, 163, 184, 0.10);
+  --control-active: rgba(59, 130, 246, 0.12);
 
-  --chart-grid: rgba(15, 23, 42, 0.07);
+  /* Accent colors - Deeper, richer for contrast */
+  --accent-primary: #4f46e5;
+  --accent-primary-deep: #4338ca;
+  --accent-secondary: #0284c7;
+  --accent-tertiary: #7c3aed;
+  --accent-glow: rgba(79, 70, 229, 0.12);
+
+  /* Semantic colors */
+  --success: #059669;
+  --success-bg: rgba(5, 150, 105, 0.10);
+  --warning: #d97706;
+  --warning-bg: rgba(217, 119, 6, 0.10);
+  --error: #dc2626;
+  --error-bg: rgba(220, 38, 38, 0.10);
+
+  /* Charts and data */
+  --chart-grid: rgba(148, 163, 184, 0.12);
 
   /* Map */
   --map-control-background: rgba(255, 255, 255, 0.94);
   --map-popup-background: #ffffff;
-  --map-popup-shadow: rgba(15, 23, 42, 0.14);
+  --map-popup-shadow: rgba(148, 163, 184, 0.18);
+  --map-marker-background: #ffffff;
+  --map-marker-hover: #f8faff;
+  --map-marker-shadow: 0 6px 18px rgba(15, 23, 42, 0.14);
+  --map-marker-hover-shadow: 0 10px 26px rgba(15, 23, 42, 0.18);
+
+  /* AQI colors - Rich for light mode */
+  --aqi-good: #059669;
+  --aqi-moderate: #d97706;
+  --aqi-sensitive: #b45309;
+  --aqi-unhealthy: #ea580c;
+  --aqi-very-unhealthy: #dc2626;
+  --aqi-hazardous: #9333ea;
 }
 
 html {
@@ -111,9 +181,10 @@ button:not(:disabled) {
 }
 
 ::selection {
-  background: rgba(56, 189, 248, 0.22);
+  background: rgba(99, 102, 241, 0.25);
 }
 
+/* Enhanced scrollbar with slate accent */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -125,11 +196,11 @@ button:not(:disabled) {
 
 ::-webkit-scrollbar-thumb {
   border-radius: 999px;
-  background: rgba(100, 116, 139, 0.35);
+  background: rgba(148, 163, 184, 0.40);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.5);
+  background: rgba(148, 163, 184, 0.55);
 }
 
 /* ─────────────────────────────────────────────
@@ -151,6 +222,8 @@ button:not(:disabled) {
     background-color 220ms ease,
     border-color 220ms ease,
     color 220ms ease;
+
+  animation: airscope-popup-in 200ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .airscope-map-popup .maplibregl-popup-tip {
@@ -210,4 +283,91 @@ button:not(:disabled) {
 
 .maplibregl-ctrl-group button + button {
   border-top-color: var(--border) !important;
+}
+
+/* ─────────────────────────────────────────────
+   Enhanced accent utilities
+   ───────────────────────────────────────────── */
+
+/* Gradient text utility */
+.text-gradient {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Subtle glow effect */
+.glow-accent {
+  box-shadow: 0 0 20px var(--accent-glow);
+}
+
+/* Animated border gradient */
+@keyframes border-flow {
+  0% {
+    border-image-source: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+  }
+  50% {
+    border-image-source: linear-gradient(90deg, var(--accent-secondary), var(--accent-primary));
+  }
+  100% {
+    border-image-source: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+  }
+}
+
+/* Subtle shimmer animation */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.shimmer {
+  animation: shimmer 2s infinite;
+}
+
+/* ─────────────────────────────────────────────
+   AirQualityMap visual polish
+   ───────────────────────────────────────────── */
+
+/* Marker pulse ring — speed is set inline per-severity */
+@keyframes airscope-marker-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  70% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+/* Popup entrance */
+@keyframes airscope-popup-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Header AQI badge breathing glow, colored via currentColor */
+@keyframes airscope-badge-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 currentColor;
+  }
+  50% {
+    box-shadow: 0 0 14px -3px currentColor;
+  }
 }
