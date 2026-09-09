@@ -1,8 +1,5 @@
-import {
-  AnimatePresence,
-  motion,
-  useReducedMotion,
-} from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { useEffect, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Alert02Icon,
@@ -10,10 +7,7 @@ import {
   WindIcon,
 } from "@hugeicons/core-free-icons";
 
-import type {
-  AQIHeroData,
-  AirQualityStatus,
-} from "../types";
+import type { AQIHeroData, AirQualityStatus } from "../types";
 
 type AQIHeroProps = {
   data: AQIHeroData;
@@ -33,17 +27,13 @@ type StatusConfig = {
   dot: string;
 };
 
-const statusConfig: Record<
-  AirQualityStatus,
-  StatusConfig
-> = {
+const statusConfig: Record<AirQualityStatus, StatusConfig> = {
   good: {
     label: "Good",
     headline: "The air looks good today.",
     description:
       "Air quality is currently in a range that is generally comfortable for outdoor activity.",
-    guidance:
-      "Outdoor activity is generally fine.",
+    guidance: "Outdoor activity is generally fine.",
     accent: "bg-emerald-400",
     accentText: "text-emerald-400",
     softBackground: "bg-emerald-400/[0.08]",
@@ -58,8 +48,7 @@ const statusConfig: Record<
     headline: "Air quality is acceptable.",
     description:
       "Most people can continue normal activity, although some sensitive individuals may notice the difference.",
-    guidance:
-      "Most people can continue normal outdoor activity.",
+    guidance: "Most people can continue normal outdoor activity.",
     accent: "bg-yellow-400",
     accentText: "text-yellow-400",
     softBackground: "bg-yellow-400/[0.08]",
@@ -74,8 +63,7 @@ const statusConfig: Record<
     headline: "Air quality needs attention.",
     description:
       "Sensitive individuals may experience effects from prolonged exposure to the current pollution levels.",
-    guidance:
-      "Consider reducing prolonged outdoor exposure.",
+    guidance: "Consider reducing prolonged outdoor exposure.",
     accent: "bg-orange-400",
     accentText: "text-orange-400",
     softBackground: "bg-orange-400/[0.08]",
@@ -90,8 +78,7 @@ const statusConfig: Record<
     headline: "Air quality is unhealthy.",
     description:
       "Prolonged exposure may affect a wider range of people, especially during physically demanding outdoor activity.",
-    guidance:
-      "Consider limiting prolonged outdoor activity.",
+    guidance: "Consider limiting prolonged outdoor activity.",
     accent: "bg-orange-500",
     accentText: "text-orange-400",
     softBackground: "bg-orange-500/[0.08]",
@@ -106,8 +93,7 @@ const statusConfig: Record<
     headline: "Air quality is very unhealthy.",
     description:
       "Health effects may become more noticeable with continued exposure to the current conditions.",
-    guidance:
-      "Reduce outdoor exposure where possible.",
+    guidance: "Reduce outdoor exposure where possible.",
     accent: "bg-red-400",
     accentText: "text-red-400",
     softBackground: "bg-red-400/[0.08]",
@@ -122,8 +108,7 @@ const statusConfig: Record<
     headline: "Air quality is hazardous.",
     description:
       "Current pollution levels indicate a high level of concern and require minimizing exposure.",
-    guidance:
-      "Avoid prolonged outdoor exposure.",
+    guidance: "Avoid prolonged outdoor exposure.",
     accent: "bg-purple-400",
     accentText: "text-purple-400",
     softBackground: "bg-purple-400/[0.08]",
@@ -137,11 +122,11 @@ const statusConfig: Record<
 const AQI_MAX = 300;
 
 /*
- * Mobile viewports skip the ambient glow "breathing" animations.
+ * Mobile viewports skip non-essential Motion and CSS animations.
  * Weaker mobile GPUs struggle to composite Framer-Motion-driven
- * scale/opacity loops layered under large blur/box-shadow regions —
- * it shows up as flashing/hanging rather than a smooth loop.
- * Desktop keeps the full animated glow.
+ * transforms layered under large blur/box-shadow regions —
+ * it shows up as flashing/hanging rather than a smooth transition.
+ * Desktop keeps the full interaction and ambient motion.
  */
 const MOBILE_BREAKPOINT_PX = 768;
 
@@ -150,16 +135,33 @@ function isMobileViewport() {
     return false;
   }
 
-  return (
-    window.innerWidth <= MOBILE_BREAKPOINT_PX
-  );
+  return window.innerWidth <= MOBILE_BREAKPOINT_PX;
 }
 
-function clamp(
-  value: number,
-  min: number,
-  max: number,
-) {
+function useIsMobileViewport() {
+  const [mobile, setMobile] = useState(isMobileViewport);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(
+      `(max-width: ${MOBILE_BREAKPOINT_PX}px)`,
+    );
+
+    const handleChange = () => {
+      setMobile(mediaQuery.matches);
+    };
+
+    handleChange();
+    mediaQuery.addEventListener("change", handleChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleChange);
+    };
+  }, []);
+
+  return mobile;
+}
+
+function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
@@ -171,34 +173,30 @@ function getSeverityPosition(aqi: number) {
   return `${getProgress(aqi) * 100}%`;
 }
 
-export function AQIHero({
-  data,
-}: AQIHeroProps) {
+export function AQIHero({ data }: AQIHeroProps) {
   const reducedMotion = useReducedMotion();
 
-  const mobile = isMobileViewport();
+  const mobile = useIsMobileViewport();
 
-  const skipAmbientLoop =
-    reducedMotion || mobile;
+  const motionEnabled = !reducedMotion && !mobile;
+
+  const skipAmbientLoop = !motionEnabled;
 
   const config = statusConfig[data.status];
 
   const progress = getProgress(data.aqi);
 
   const radius = 82;
-  const circumference =
-    2 * Math.PI * radius;
+  const circumference = 2 * Math.PI * radius;
 
-  const dashOffset =
-    circumference * (1 - progress);
+  const dashOffset = circumference * (1 - progress);
 
-  const markerPosition =
-    getSeverityPosition(data.aqi);
+  const markerPosition = getSeverityPosition(data.aqi);
 
   return (
     <motion.section
       initial={
-        reducedMotion
+        !motionEnabled
           ? { opacity: 1 }
           : {
               opacity: 0,
@@ -210,7 +208,7 @@ export function AQIHero({
         y: 0,
       }}
       transition={{
-        duration: reducedMotion ? 0 : 0.6,
+        duration: motionEnabled ? 0.6 : 0,
         ease: [0.22, 1, 0.36, 1],
       }}
       className="relative overflow-hidden rounded-[28px] border border-[var(--border)] bg-gradient-to-br from-[var(--surface-secondary)] via-[var(--surface)] to-[var(--surface-secondary)] transition-colors duration-200 shadow-[0_8px_40px_rgba(15,23,42,0.12)]"
@@ -246,7 +244,7 @@ export function AQIHero({
           {/* Location with gradient */}
           <div className="flex min-w-0 items-center gap-3">
             <motion.div
-              whileHover={{ scale: 1.05 }}
+              whileHover={motionEnabled ? { scale: 1.05 } : undefined}
               transition={{ type: "spring", stiffness: 400, damping: 25 }}
               className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-[var(--border)] bg-gradient-to-br from-[var(--control-background)] to-[var(--control-hover)] shadow-[0_2px_8px_rgba(148,163,184,0.08)]"
             >
@@ -274,7 +272,7 @@ export function AQIHero({
             <motion.div
               key={data.status}
               initial={
-                reducedMotion
+                !motionEnabled
                   ? { opacity: 1 }
                   : {
                       opacity: 0,
@@ -286,7 +284,7 @@ export function AQIHero({
                 y: 0,
               }}
               exit={
-                reducedMotion
+                !motionEnabled
                   ? undefined
                   : {
                       opacity: 0,
@@ -294,11 +292,13 @@ export function AQIHero({
                     }
               }
               transition={{
-                duration: reducedMotion ? 0 : 0.22,
+                duration: motionEnabled ? 0.22 : 0,
               }}
               className={`inline-flex items-center gap-2 w-fit rounded-full border ${config.border} ${config.softBackground} px-3.5 py-1.5 ${config.accentText} text-[10px] font-semibold uppercase tracking-[0.12em] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]`}
             >
-              <span className={`size-1.5 rounded-full ${config.dot} shadow-[0_0_6px_currentColor]`} />
+              <span
+                className={`size-1.5 rounded-full ${config.dot} shadow-[0_0_6px_currentColor]`}
+              />
               {config.label}
             </motion.div>
           </AnimatePresence>
@@ -376,10 +376,8 @@ export function AQIHero({
                     strokeDashoffset: dashOffset,
                   }}
                   transition={{
-                    duration: reducedMotion
-                      ? 0
-                      : 1.15,
-                    delay: reducedMotion ? 0 : 0.08,
+                    duration: motionEnabled ? 1.15 : 0,
+                    delay: motionEnabled ? 0.08 : 0,
                     ease: [0.22, 1, 0.36, 1],
                   }}
                   transform="rotate(-90 110 110)"
@@ -392,36 +390,21 @@ export function AQIHero({
                 {Array.from({
                   length: 24,
                 }).map((_, index) => {
-                  const angle =
-                    (index / 24) * 360;
+                  const angle = (index / 24) * 360;
 
-                  const radians =
-                    (angle * Math.PI) / 180;
+                  const radians = (angle * Math.PI) / 180;
 
                   const outerRadius = 98;
 
-                  const innerRadius =
-                    index % 4 === 0 ? 93 : 95;
+                  const innerRadius = index % 4 === 0 ? 93 : 95;
 
-                  const x1 =
-                    110 +
-                    Math.cos(radians) *
-                      innerRadius;
+                  const x1 = 110 + Math.cos(radians) * innerRadius;
 
-                  const y1 =
-                    110 +
-                    Math.sin(radians) *
-                      innerRadius;
+                  const y1 = 110 + Math.sin(radians) * innerRadius;
 
-                  const x2 =
-                    110 +
-                    Math.cos(radians) *
-                      outerRadius;
+                  const x2 = 110 + Math.cos(radians) * outerRadius;
 
-                  const y2 =
-                    110 +
-                    Math.sin(radians) *
-                      outerRadius;
+                  const y2 = 110 + Math.sin(radians) * outerRadius;
 
                   return (
                     <line
@@ -431,14 +414,8 @@ export function AQIHero({
                       x2={x2}
                       y2={y2}
                       stroke="var(--foreground-faint)"
-                      strokeOpacity={
-                        index % 4 === 0
-                          ? 0.8
-                          : 0.4
-                      }
-                      strokeWidth={
-                        index % 4 === 0 ? 1.4 : 1
-                      }
+                      strokeOpacity={index % 4 === 0 ? 0.8 : 0.4}
+                      strokeWidth={index % 4 === 0 ? 1.4 : 1}
                       strokeLinecap="round"
                     />
                   );
@@ -448,12 +425,19 @@ export function AQIHero({
               {/* Center value with gradient background */}
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
+                  initial={
+                    motionEnabled
+                      ? { opacity: 0, scale: 0.95 }
+                      : { opacity: 1, scale: 1 }
+                  }
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
+                  transition={{
+                    duration: motionEnabled ? 0.5 : 0,
+                    delay: motionEnabled ? 0.2 : 0,
+                  }}
                   className="absolute inset-0 rounded-full bg-gradient-to-br from-[var(--accent-primary)]/[0.03] to-transparent"
                 />
-                
+
                 <span className="relative z-10 mb-1 text-[9px] font-semibold uppercase tracking-[0.22em] text-[var(--foreground-subtle)]">
                   AQI
                 </span>
@@ -461,7 +445,7 @@ export function AQIHero({
                 <motion.span
                   key={data.aqi}
                   initial={
-                    reducedMotion
+                    !motionEnabled
                       ? { opacity: 1 }
                       : {
                           opacity: 0,
@@ -475,9 +459,7 @@ export function AQIHero({
                     scale: 1,
                   }}
                   transition={{
-                    duration: reducedMotion
-                      ? 0
-                      : 0.45,
+                    duration: motionEnabled ? 0.45 : 0,
                     ease: [0.22, 1, 0.36, 1],
                   }}
                   className="relative z-10 text-[64px] font-semibold leading-none tracking-[-0.08em] text-[var(--foreground)] drop-shadow-[0_2px_8px_rgba(0,0,0,0.15)] sm:text-[70px]"
@@ -489,7 +471,7 @@ export function AQIHero({
                   <motion.span
                     key={data.status}
                     initial={
-                      reducedMotion
+                      !motionEnabled
                         ? { opacity: 1 }
                         : {
                             opacity: 0,
@@ -501,7 +483,7 @@ export function AQIHero({
                       y: 0,
                     }}
                     exit={
-                      reducedMotion
+                      !motionEnabled
                         ? undefined
                         : {
                             opacity: 0,
@@ -509,9 +491,7 @@ export function AQIHero({
                           }
                     }
                     transition={{
-                      duration: reducedMotion
-                        ? 0
-                        : 0.2,
+                      duration: motionEnabled ? 0.2 : 0,
                     }}
                     className={`relative z-10 mt-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] ${config.accentText} drop-shadow-[0_0_8px_rgba(0,0,0,0.2)]`}
                   >
@@ -542,9 +522,7 @@ export function AQIHero({
                     left: markerPosition,
                   }}
                   transition={{
-                    duration: reducedMotion
-                      ? 0
-                      : 0.9,
+                    duration: motionEnabled ? 0.9 : 0,
                     ease: [0.22, 1, 0.36, 1],
                   }}
                 />
@@ -586,11 +564,7 @@ export function AQIHero({
             {/* Key information with gradient cards */}
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <motion.div
-                whileHover={
-                  reducedMotion
-                    ? undefined
-                    : { y: -2, scale: 1.01 }
-                }
+                whileHover={motionEnabled ? { y: -2, scale: 1.01 } : undefined}
                 transition={{ type: "spring", stiffness: 400, damping: 25 }}
                 className="group relative overflow-hidden rounded-2xl border border-[var(--border)] bg-gradient-to-br from-[var(--control-background)] via-[var(--control-background)] to-[var(--accent-glow)] p-4 transition-all hover:border-[var(--foreground-faint)] hover:shadow-[0_6px_20px_rgba(148,163,184,0.12)]"
               >
@@ -614,11 +588,7 @@ export function AQIHero({
               </motion.div>
 
               <motion.div
-                whileHover={
-                  reducedMotion
-                    ? undefined
-                    : { y: -2, scale: 1.01 }
-                }
+                whileHover={motionEnabled ? { y: -2, scale: 1.01 } : undefined}
                 transition={{ type: "spring", stiffness: 400, damping: 25 }}
                 className="group relative overflow-hidden rounded-2xl border border-[var(--border)] bg-gradient-to-br from-[var(--control-background)] via-[var(--control-background)] to-[var(--accent-glow)] p-4 transition-all hover:border-[var(--foreground-faint)] hover:shadow-[0_6px_20px_rgba(148,163,184,0.12)]"
               >
@@ -632,7 +602,9 @@ export function AQIHero({
                   </span>
 
                   <span className="relative flex size-2">
-                    <span className="absolute size-full animate-ping rounded-full bg-emerald-400/30" />
+                    <span
+                      className={`${motionEnabled ? "animate-ping" : ""} absolute size-full rounded-full bg-emerald-400/30`}
+                    />
 
                     <span className="relative size-2 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-500 shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
                   </span>
@@ -646,11 +618,7 @@ export function AQIHero({
 
             {/* Guidance with enhanced styling */}
             <motion.div
-              whileHover={
-                reducedMotion
-                  ? undefined
-                  : { scale: 1.01 }
-              }
+              whileHover={motionEnabled ? { scale: 1.01 } : undefined}
               transition={{ type: "spring", stiffness: 400, damping: 25 }}
               className="relative mt-4 overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-gradient-to-br from-[var(--control-background)] via-[var(--control-background)] to-[var(--accent-glow)]/50 p-4 transition-all hover:border-[var(--border-hover)] hover:shadow-[0_6px_20px_rgba(148,163,184,0.1)]"
             >
@@ -693,8 +661,8 @@ export function AQIHero({
             </div>
 
             <p className="text-[10px] leading-5 text-[var(--foreground-subtle)]">
-              Air quality changes with weather, wind, emissions
-              and other environmental conditions.
+              Air quality changes with weather, wind, emissions and other
+              environmental conditions.
             </p>
           </div>
 
