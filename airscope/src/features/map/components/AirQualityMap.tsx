@@ -39,42 +39,49 @@ const STATUS_STYLES: Record<
     color: string;
     text: string;
     label: string;
+    pulseDuration: string;
   }
 > = {
   good: {
     color: "#22c55e",
     text: "#d1fae5",
     label: "Good",
+    pulseDuration: "3s",
   },
 
   moderate: {
     color: "#eab308",
     text: "#fef9c3",
     label: "Moderate",
+    pulseDuration: "2.6s",
   },
 
   poor: {
     color: "#f97316",
     text: "#ffedd5",
     label: "Poor",
+    pulseDuration: "2.1s",
   },
 
   unhealthy: {
     color: "#ef4444",
     text: "#fee2e2",
     label: "Unhealthy",
+    pulseDuration: "1.7s",
   },
 
   "very-unhealthy": {
     color: "#a855f7",
     text: "#f3e8ff",
     label: "Very unhealthy",
+    pulseDuration: "1.3s",
   },
 
   hazardous: {
     color: "#c026d3",
     text: "#fae8ff",
     label: "Hazardous",
+    pulseDuration: "1s",
   },
 };
 
@@ -176,8 +183,30 @@ function createMarkerElement(
         var(--map-marker-shadow)
       `,
       transition:
-        "transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease",
+        "transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 220ms ease, background-color 220ms ease",
       zIndex: "2",
+      willChange: "transform",
+    },
+  );
+
+  /*
+   * Pulsing ring behind the marker.
+   * Speed scales with severity: worse AQI pulses faster,
+   * giving an immediate ambient signal before hover.
+   */
+  const pulseRing =
+    document.createElement("span");
+
+  Object.assign(
+    pulseRing.style,
+    {
+      position: "absolute",
+      inset: "-2px",
+      borderRadius: "999px",
+      border: `2px solid ${colors.color}`,
+      opacity: "0.55",
+      pointerEvents: "none",
+      animation: `airscope-marker-pulse ${colors.pulseDuration} cubic-bezier(0.22, 1, 0.36, 1) infinite`,
     },
   );
 
@@ -218,11 +247,16 @@ function createMarkerElement(
     {
       position: "relative",
       zIndex: "2",
+      transition: "transform 220ms ease",
     },
   );
 
   value.textContent =
     String(aqi);
+
+  button.appendChild(
+    pulseRing,
+  );
 
   button.appendChild(
     outerGlow,
@@ -240,15 +274,19 @@ function createMarkerElement(
     "mouseenter",
     () => {
       button.style.transform =
-        "scale(1.1)";
+        "scale(1.14) translateY(-2px)";
 
       button.style.background =
         "var(--map-marker-hover)";
 
       button.style.boxShadow = `
-        0 0 0 7px ${colors.color}24,
+        0 0 0 7px ${colors.color}26,
+        0 14px 28px -6px ${colors.color}55,
         var(--map-marker-hover-shadow)
       `;
+
+      value.style.transform =
+        "scale(1.05)";
     },
   );
 
@@ -256,7 +294,7 @@ function createMarkerElement(
     "mouseleave",
     () => {
       button.style.transform =
-        "scale(1)";
+        "scale(1) translateY(0)";
 
       button.style.background =
         "var(--map-marker-background)";
@@ -265,6 +303,9 @@ function createMarkerElement(
         0 0 0 5px ${colors.color}18,
         var(--map-marker-shadow)
       `;
+
+      value.style.transform =
+        "scale(1)";
     },
   );
 
@@ -295,6 +336,17 @@ function createPopup({
   const colors =
     STATUS_STYLES[status];
 
+  /*
+   * Ring fraction for the AQI dial.
+   * AQI scale is treated as 0-300+ for the conic sweep,
+   * clamped so hazardous readings still read as "full".
+   */
+  const ringFraction =
+    Math.min(
+      (aqi / 300) * 100,
+      100,
+    );
+
   return new Popup({
     offset: 34,
     closeButton: false,
@@ -304,7 +356,7 @@ function createPopup({
   }).setHTML(`
     <div
       style="
-        min-width: 190px;
+        min-width: 200px;
         font-family: Inter, system-ui, sans-serif;
         color: var(--foreground);
       "
@@ -354,50 +406,79 @@ function createPopup({
       <div
         style="
           display: flex;
-          align-items: baseline;
-          gap: 6px;
-          margin-top: 14px;
+          align-items: center;
+          gap: 14px;
+          margin-top: 16px;
         "
       >
-        <span
+        <div
           style="
-            font-size: 28px;
-            line-height: 1;
-            font-weight: 700;
-            letter-spacing: -0.05em;
-            color: var(--foreground);
+            position: relative;
+            width: 58px;
+            height: 58px;
+            border-radius: 999px;
+            flex-shrink: 0;
+            background: conic-gradient(${colors.color} ${ringFraction}%, ${colors.color}1a 0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
           "
         >
-          ${aqi}
-        </span>
+          <div
+            style="
+              width: 46px;
+              height: 46px;
+              border-radius: 999px;
+              background: var(--map-popup-background);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            "
+          >
+            <span
+              style="
+                font-size: 18px;
+                line-height: 1;
+                font-weight: 700;
+                letter-spacing: -0.04em;
+                color: var(--foreground);
+              "
+            >
+              ${aqi}
+            </span>
+          </div>
+        </div>
 
-        <span
-          style="
-            font-size: 9px;
-            color: var(--foreground-subtle);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-          "
-        >
-          AQI
-        </span>
-      </div>
+        <div>
+          <div
+            style="
+              font-size: 9px;
+              color: var(--foreground-subtle);
+              text-transform: uppercase;
+              letter-spacing: 0.1em;
+            "
+          >
+            AQI
+          </div>
 
-      <div
-        style="
-          margin-top: 9px;
-          display: inline-flex;
-          padding: 4px 7px;
-          border-radius: 999px;
-          background: ${colors.color}18;
-          color: ${colors.text};
-          font-size: 9px;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-        "
-      >
-        ${colors.label}
+          <div
+            style="
+              margin-top: 6px;
+              display: inline-flex;
+              padding: 4px 8px;
+              border-radius: 999px;
+              background: ${colors.color}18;
+              color: ${colors.text};
+              font-size: 9px;
+              font-weight: 700;
+              text-transform: uppercase;
+              letter-spacing: 0.08em;
+              white-space: nowrap;
+            "
+          >
+            ${colors.label}
+          </div>
+        </div>
       </div>
 
       <div
@@ -405,7 +486,7 @@ function createPopup({
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 10px;
-          margin-top: 13px;
+          margin-top: 14px;
           padding-top: 11px;
           border-top: 1px solid var(--border);
         "
@@ -468,7 +549,7 @@ function createPopup({
 
 function LoadingOverlay() {
   return (
-    <div className="absolute inset-0 z-20 flex items-center justify-center bg-[var(--surface)]/55 backdrop-blur-[2px]">
+    <div className="absolute inset-0 z-20 flex items-center justify-center bg-[var(--surface)]/55 backdrop-blur-[2px] transition-opacity duration-300">
       <div className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)]/90 px-4 py-3 shadow-lg backdrop-blur-md">
         <span className="relative flex size-2">
           <span className="absolute size-full animate-ping rounded-full bg-emerald-400/25" />
@@ -591,6 +672,16 @@ export function AirQualityMap() {
     ) {
       return;
     }
+
+    /*
+     * Fade the map in once tiles + marker are ready,
+     * instead of popping in abruptly.
+     */
+    container.style.opacity =
+      "0";
+
+    container.style.transition =
+      "opacity 480ms cubic-bezier(0.22, 1, 0.36, 1)";
 
     const map =
       new Map({
@@ -869,6 +960,13 @@ export function AirQualityMap() {
         requestAnimationFrame(
           () => {
             map.resize();
+
+            requestAnimationFrame(
+              () => {
+                container.style.opacity =
+                  "1";
+              },
+            );
           },
         );
       };
@@ -879,6 +977,13 @@ export function AirQualityMap() {
           "AirScope MapLibre error:",
           event,
         );
+
+        /*
+         * Still reveal the map on error so the
+         * user isn't staring at a blank fade.
+         */
+        container.style.opacity =
+          "1";
       };
 
     map.once(
@@ -917,6 +1022,13 @@ export function AirQualityMap() {
     mapData,
   ]);
 
+  const activeColors =
+    mapData
+      ? STATUS_STYLES[
+          mapData.status
+        ]
+      : null;
+
   return (
     <motion.section
       initial={{
@@ -954,19 +1066,24 @@ export function AirQualityMap() {
           </p>
         </div>
 
-        {mapData && (
-          <div className="hidden shrink-0 rounded-xl border border-orange-400/10 bg-orange-400/[0.035] px-3 py-2 text-right sm:block">
+        {mapData && activeColors && (
+          <div
+            className="hidden shrink-0 animate-[airscope-badge-breathe_2.6s_ease-in-out_infinite] rounded-xl border px-3 py-2 text-right sm:block"
+            style={{
+              borderColor: `${activeColors.color}26`,
+              backgroundColor: `${activeColors.color}0d`,
+              color: activeColors.color,
+            }}
+          >
             <p className="text-[9px] font-medium uppercase tracking-[0.12em] text-[var(--foreground-subtle)]">
               Current AQI
             </p>
 
-            <p className="mt-0.5 text-[11px] font-medium text-orange-300/70">
-              {mapData.aqi} ·{" "}
-              {
-                STATUS_STYLES[
-                  mapData.status
-                ].label
-              }
+            <p
+              className="mt-0.5 text-[11px] font-medium"
+              style={{ color: activeColors.color }}
+            >
+              {mapData.aqi} · {activeColors.label}
             </p>
           </div>
         )}
@@ -996,7 +1113,7 @@ export function AirQualityMap() {
 
         {/* Current city */}
         {mapData && (
-          <div className="pointer-events-none absolute left-3 top-3 rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)]/90 px-3 py-2 shadow-sm backdrop-blur-md">
+          <div className="pointer-events-none absolute left-3 top-3 rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)]/90 px-3 py-2 shadow-sm backdrop-blur-md transition-shadow duration-300">
             <p className="text-[9px] uppercase tracking-[0.1em] text-[var(--foreground-subtle)]">
               Selected city
             </p>
@@ -1015,31 +1132,62 @@ export function AirQualityMap() {
 
           <span className="mx-0.5 h-3 w-px bg-[var(--border)]" />
 
-          <span className="size-1.5 rounded-full bg-emerald-400" />
+          <span
+            className={`size-1.5 rounded-full bg-emerald-400 transition-all duration-300 ${
+              mapData?.status === "good"
+                ? "scale-125 shadow-[0_0_8px_2px_rgba(52,211,153,0.55)]"
+                : ""
+            }`}
+          />
 
           <span className="text-[9px] text-[var(--foreground-muted)]">
             Good
           </span>
 
-          <span className="ml-1 size-1.5 rounded-full bg-yellow-400" />
+          <span
+            className={`ml-1 size-1.5 rounded-full bg-yellow-400 transition-all duration-300 ${
+              mapData?.status === "moderate"
+                ? "scale-125 shadow-[0_0_8px_2px_rgba(250,204,21,0.55)]"
+                : ""
+            }`}
+          />
 
           <span className="text-[9px] text-[var(--foreground-muted)]">
             Moderate
           </span>
 
-          <span className="ml-1 size-1.5 rounded-full bg-orange-400" />
+          <span
+            className={`ml-1 size-1.5 rounded-full bg-orange-400 transition-all duration-300 ${
+              mapData?.status === "poor"
+                ? "scale-125 shadow-[0_0_8px_2px_rgba(251,146,60,0.55)]"
+                : ""
+            }`}
+          />
 
           <span className="text-[9px] text-[var(--foreground-muted)]">
             Poor
           </span>
 
-          <span className="ml-1 size-1.5 rounded-full bg-red-400" />
+          <span
+            className={`ml-1 size-1.5 rounded-full bg-red-400 transition-all duration-300 ${
+              mapData?.status === "unhealthy"
+                ? "scale-125 shadow-[0_0_8px_2px_rgba(248,113,113,0.55)]"
+                : ""
+            }`}
+          />
 
           <span className="text-[9px] text-[var(--foreground-muted)]">
             Unhealthy
           </span>
 
-          <span className="ml-1 size-1.5 rounded-full bg-purple-400" />
+          <span
+            className={`ml-1 size-1.5 rounded-full bg-purple-400 transition-all duration-300 ${
+              mapData?.status === "very-unhealthy" ||
+              mapData?.status === "hazardous"
+                ? "scale-125 shadow-[0_0_8px_2px_rgba(192,132,252,0.55)]"
+                : ""
+            }`}
+          />
 
           <span className="text-[9px] text-[var(--foreground-muted)]">
             Very unhealthy

@@ -79,6 +79,16 @@ function getThemeColors() {
         .getPropertyValue("--chart-grid")
         .trim() ||
       "rgba(255,255,255,0.045)",
+
+    accentPrimary:
+      styles
+        .getPropertyValue("--accent-primary")
+        .trim() || "#818cf8",
+
+    accentSecondary:
+      styles
+        .getPropertyValue("--accent-secondary")
+        .trim() || "#38bdf8",
   };
 }
 
@@ -521,12 +531,12 @@ export function AQITrendChart() {
             symbol: "none",
 
             lineStyle: {
-              color: "#F97316",
-              width: 2,
+              color: colors.accentSecondary,
+              width: 2.5,
             },
 
             itemStyle: {
-              color: "#F97316",
+              color: colors.accentSecondary,
             },
 
             areaStyle: {
@@ -541,17 +551,17 @@ export function AQITrendChart() {
                   {
                     offset: 0,
                     color:
-                      "rgba(249,115,22,0.18)",
+                      "rgba(56,189,248,0.20)",
                   },
                   {
                     offset: 0.65,
                     color:
-                      "rgba(249,115,22,0.05)",
+                      "rgba(56,189,248,0.06)",
                   },
                   {
                     offset: 1,
                     color:
-                      "rgba(249,115,22,0)",
+                      "rgba(56,189,248,0)",
                   },
                 ],
               },
@@ -561,7 +571,7 @@ export function AQITrendChart() {
               scale: true,
 
               itemStyle: {
-                color: "#FB923C",
+                color: colors.accentPrimary,
                 borderColor:
                   colors.surface,
                 borderWidth: 3,
@@ -601,13 +611,15 @@ export function AQITrendChart() {
               silent: true,
 
               symbol: "circle",
-              symbolSize: 9,
+              symbolSize: 10,
 
               itemStyle: {
-                color: "#F97316",
+                color: colors.accentSecondary,
                 borderColor:
                   colors.surface,
                 borderWidth: 3,
+                shadowColor: "rgba(56,189,248,0.4)",
+                shadowBlur: 8,
               },
 
               data: [
@@ -636,10 +648,19 @@ export function AQITrendChart() {
 
   if (isLoading) {
     return (
-      <section className="h-full rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6">
+      <motion.section
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        className="relative h-full overflow-hidden rounded-3xl border border-[var(--border)] bg-gradient-to-br from-[var(--surface)] via-[var(--surface-secondary)] to-[var(--surface)] p-5 sm:p-6"
+      >
         <div className="animate-pulse">
-          <div className="h-4 w-32 rounded bg-[var(--control-hover)]" />
-          <div className="mt-2 h-3 w-64 rounded bg-[var(--control-hover)]" />
+          <div className="flex items-center gap-2">
+            <div className="h-4 w-32 rounded bg-[var(--control-hover)]" />
+            <div className="h-4 w-20 rounded bg-[var(--control-background)]" />
+          </div>
+          
+          <div className="mt-2 h-3 w-64 rounded bg-[var(--control-background)]" />
 
           <div className="mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
             {Array.from({
@@ -647,28 +668,45 @@ export function AQITrendChart() {
             }).map((_, index) => (
               <div
                 key={index}
-                className="h-20 rounded-2xl bg-[var(--control-background)]"
-              />
+                className="relative h-20 overflow-hidden rounded-2xl bg-gradient-to-br from-[var(--control-background)] to-[var(--control-hover)]"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--foreground-faint)]/10 to-transparent animate-shimmer" style={{ animationDelay: `${index * 0.15}s` }} />
+              </div>
             ))}
           </div>
 
-          <div className="mt-4 h-[280px] rounded-2xl bg-[var(--control-background)]" />
+          <div className="relative mt-4 h-[280px] overflow-hidden rounded-2xl bg-gradient-to-br from-[var(--control-background)] to-[var(--control-hover)]">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--foreground-faint)]/10 to-transparent animate-shimmer" />
+          </div>
         </div>
-      </section>
+      </motion.section>
     );
   }
 
   if (isError || !data) {
     return (
-      <section className="h-full rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6">
-        <p className="text-sm font-medium text-[var(--foreground-secondary)]">
-          AQI trend unavailable
-        </p>
+      <motion.section
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        className="h-full rounded-3xl border border-[var(--border)] bg-gradient-to-br from-[var(--surface)] via-[var(--surface-secondary)] to-[var(--surface)] p-6"
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--error)]/15 to-[var(--error)]/8 shadow-[0_0_16px_rgba(220,38,38,0.12)]">
+            <span className="text-lg font-bold text-[var(--error)]">!</span>
+          </div>
+          
+          <div>
+            <p className="text-sm font-medium text-[var(--foreground-secondary)]">
+              AQI trend unavailable
+            </p>
 
-        <p className="mt-1 text-xs text-[var(--foreground-muted)]">
-          Historical observations could not be loaded.
-        </p>
-      </section>
+            <p className="mt-1 text-xs text-[var(--foreground-muted)]">
+              Historical observations could not be loaded.
+            </p>
+          </div>
+        </div>
+      </motion.section>
     );
   }
 
@@ -697,32 +735,42 @@ export function AQITrendChart() {
           1,
         ],
       }}
-      className="h-full rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-5 transition-colors duration-200 sm:p-6"
+      className="relative h-full overflow-hidden rounded-3xl border border-[var(--border)] bg-gradient-to-br from-[var(--surface)] via-[var(--surface-secondary)] to-[var(--surface)] p-5 transition-colors duration-200 shadow-[0_8px_32px_rgba(15,23,42,0.12)] sm:p-6"
     >
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-medium text-[var(--foreground-secondary)]">
-              AQI trend
-            </p>
+      {/* Subtle gradient mesh overlay */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[var(--accent-secondary)]/[0.02] via-transparent to-transparent opacity-60" />
 
-            <span className="size-1 rounded-full bg-[var(--foreground-faint)]" />
+      {/* Header with enhanced styling */}
+      <div className="relative flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2.5">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--control-background)] px-2.5 py-1">
+              <span className="size-1.5 rounded-full bg-gradient-to-br from-[var(--accent-secondary)] to-[var(--accent-primary)] shadow-[0_0_6px_rgba(56,189,248,0.3)]" />
+              <p className="text-sm font-medium text-[var(--foreground-secondary)]">
+                AQI trend
+              </p>
+            </div>
+
+            <span className="size-1 shrink-0 rounded-full bg-[var(--foreground-faint)]" />
 
             <span className="text-[10px] uppercase tracking-[0.12em] text-[var(--foreground-subtle)]">
               Last 24 hours
             </span>
           </div>
 
-          <p className="mt-1 text-xs text-[var(--foreground-muted)]">
+          <p className="mt-1.5 text-xs text-[var(--foreground-muted)]">
             Historical air-quality observations from the API
           </p>
         </div>
       </div>
 
-      {/* Summary */}
-      <div className="mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--control-background)] p-3.5">
+      {/* Summary with enhanced cards */}
+      <div className="relative mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+        <motion.div
+          whileHover={{ y: -2, scale: 1.02 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+          className="group relative overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-gradient-to-br from-[var(--control-background)] via-[var(--control-background)] to-[var(--accent-glow)]/50 p-3.5 transition-all hover:border-[var(--foreground-faint)] hover:shadow-[0_6px_20px_rgba(148,163,184,0.12)]"
+        >
           <p className="text-[9px] font-medium uppercase tracking-[0.13em] text-[var(--foreground-subtle)]">
             Current
           </p>
@@ -736,9 +784,13 @@ export function AQITrendChart() {
               AQI
             </span>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--control-background)] p-3.5">
+        <motion.div
+          whileHover={{ y: -2, scale: 1.02 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+          className="group relative overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-gradient-to-br from-[var(--control-background)] via-[var(--control-background)] to-[var(--accent-glow)]/50 p-3.5 transition-all hover:border-[var(--foreground-faint)] hover:shadow-[0_6px_20px_rgba(148,163,184,0.12)]"
+        >
           <p className="text-[9px] font-medium uppercase tracking-[0.13em] text-[var(--foreground-subtle)]">
             24h change
           </p>
@@ -747,9 +799,9 @@ export function AQITrendChart() {
             <span
               className={`text-xl font-semibold tracking-[-0.04em] ${
                 change > 0
-                  ? "text-orange-300/80"
+                  ? "text-orange-400/90"
                   : change < 0
-                    ? "text-emerald-300/80"
+                    ? "text-emerald-400/90"
                     : "text-[var(--foreground-secondary)]"
               }`}
             >
@@ -763,9 +815,13 @@ export function AQITrendChart() {
               AQI
             </span>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--control-background)] p-3.5">
+        <motion.div
+          whileHover={{ y: -2, scale: 1.02 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+          className="group relative overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-gradient-to-br from-[var(--control-background)] via-[var(--control-background)] to-[var(--accent-glow)]/50 p-3.5 transition-all hover:border-[var(--foreground-faint)] hover:shadow-[0_6px_20px_rgba(148,163,184,0.12)]"
+        >
           <p className="text-[9px] font-medium uppercase tracking-[0.13em] text-[var(--foreground-subtle)]">
             Average
           </p>
@@ -779,9 +835,13 @@ export function AQITrendChart() {
               AQI
             </span>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--control-background)] p-3.5">
+        <motion.div
+          whileHover={{ y: -2, scale: 1.02 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+          className="group relative overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-gradient-to-br from-[var(--control-background)] via-[var(--control-background)] to-[var(--accent-glow)]/50 p-3.5 transition-all hover:border-[var(--foreground-faint)] hover:shadow-[0_6px_20px_rgba(148,163,184,0.12)]"
+        >
           <p className="text-[9px] font-medium uppercase tracking-[0.13em] text-[var(--foreground-subtle)]">
             Peak
           </p>
@@ -801,13 +861,13 @@ export function AQITrendChart() {
                 : ""}
             </span>
           </div>
-        </div>
+        </motion.div>
       </div>
 
-      {/* Chart */}
-      <div className="relative mt-4">
+      {/* Chart with enhanced presentation */}
+      <div className="relative mt-5">
         <div className="pointer-events-none absolute left-0 top-0 z-10 flex items-center gap-2">
-          <span className="size-1.5 rounded-full bg-orange-400" />
+          <span className="size-2 rounded-full bg-gradient-to-br from-[var(--accent-secondary)] to-[var(--accent-primary)] shadow-[0_0_8px_rgba(56,189,248,0.4)]" />
 
           <span className="text-[9px] font-medium uppercase tracking-[0.12em] text-[var(--foreground-subtle)]">
             AQI
@@ -824,14 +884,14 @@ export function AQITrendChart() {
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="flex flex-col gap-2 border-t border-[var(--border-subtle)] pt-4 sm:flex-row sm:items-center sm:justify-between">
+      {/* Footer with enhanced styling */}
+      <div className="relative mt-4 flex flex-col gap-2.5 border-t border-[var(--border-subtle)] pt-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-[10px] leading-5 text-[var(--foreground-subtle)]">
           Historical values are supplied by the current AirScope environmental data source.
         </p>
 
-        <div className="flex shrink-0 items-center gap-2">
-          <span className="size-1.5 rounded-full bg-orange-400/80" />
+        <div className="inline-flex items-center gap-2 shrink-0 rounded-full border border-[var(--border-subtle)] bg-[var(--control-background)] px-2.5 py-1">
+          <span className="size-1.5 rounded-full bg-gradient-to-br from-[var(--accent-secondary)] to-[var(--accent-primary)] shadow-[0_0_6px_rgba(56,189,248,0.3)]" />
 
           <span className="text-[9px] uppercase tracking-[0.1em] text-[var(--foreground-subtle)]">
             Live API history

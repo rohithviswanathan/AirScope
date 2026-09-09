@@ -122,16 +122,12 @@ export function Topbar() {
               query,
             );
 
-          /*
-           * Ignore an older request if the user has
-           * already typed something newer.
-           */
-          if (
-            requestId !==
-            searchRequestRef.current
-          ) {
-            return;
-          }
+        if (
+          requestId !==
+          searchRequestRef.current
+        ) {
+          return;
+        }
 
           setSearchResults(
             results.slice(0, 6),
@@ -211,10 +207,13 @@ export function Topbar() {
       : "Ctrl";
 
   return (
-    <header className="relative z-30 hidden h-[76px] shrink-0 items-center border-b border-[var(--border)] bg-[var(--surface-secondary)]/80 px-6 backdrop-blur-xl transition-colors duration-200 lg:flex xl:px-8">
+    <header className="relative z-30 hidden h-[76px] shrink-0 items-center border-b border-[var(--border)] bg-[var(--surface-secondary)]/90 px-6 backdrop-blur-xl transition-colors duration-200 lg:flex xl:px-8">
+      {/* Subtle gradient accent bar at top */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-[var(--accent-primary)] via-[var(--accent-secondary)] to-[var(--accent-primary)] opacity-60" />
+      
       <div className="flex w-full items-center gap-5">
         {/* ------------------------------------------------------------------ */}
-        {/* Current location                                                   */}
+        {/* Current location with vibrant accent                               */}
         {/* ------------------------------------------------------------------ */}
 
         <motion.button
@@ -222,21 +221,21 @@ export function Topbar() {
           whileTap={{
             scale: 0.985,
           }}
-          className="group flex min-w-0 shrink-0 items-center gap-3 rounded-xl px-2 py-1.5 text-left outline-none transition-colors hover:bg-[var(--control-background)] focus-visible:ring-2 focus-visible:ring-[var(--foreground-faint)]"
+          className="group flex min-w-0 shrink-0 items-center gap-3 rounded-xl px-2 py-1.5 text-left outline-none transition-all hover:bg-[var(--control-hover)] focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)]/40"
           aria-label={`Current location: ${location.name}, ${location.country}`}
         >
-          <div className="relative flex size-9 shrink-0 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--control-background)] transition-colors duration-200 group-hover:border-[var(--foreground-faint)] group-hover:bg-[var(--control-hover)]">
+          <div className="relative flex size-9 shrink-0 items-center justify-center rounded-xl border border-[var(--border)] bg-gradient-to-br from-[var(--control-background)] to-[var(--accent-glow)] transition-all duration-200 group-hover:border-[var(--accent-secondary)]/40 group-hover:shadow-[0_0_15px_rgba(6,182,212,0.15)]">
             <HugeiconsIcon
               icon={Location01Icon}
               size={17}
               strokeWidth={1.5}
-              className="text-[var(--foreground-muted)] transition-colors duration-200 group-hover:text-[var(--foreground-secondary)]"
+              className="text-[var(--accent-primary)] transition-colors duration-200 group-hover:text-[var(--accent-secondary)]"
             />
 
             <span className="absolute -right-0.5 -top-0.5 flex size-2">
               <span className="absolute size-full animate-ping rounded-full bg-emerald-400/25" />
 
-              <span className="relative size-2 rounded-full border border-[var(--surface-secondary)] bg-emerald-400" />
+              <span className="relative size-2 rounded-full border border-[var(--surface-secondary)] bg-gradient-to-br from-emerald-400 to-emerald-500 shadow-[0_0_8px_rgba(52,211,153,0.4)]" />
             </span>
           </div>
 
@@ -260,11 +259,11 @@ export function Topbar() {
           </div>
         </motion.button>
 
-        {/* Divider */}
-        <div className="h-8 w-px shrink-0 bg-[var(--border)]" />
+        {/* Divider with gradient */}
+        <div className="relative h-8 w-px shrink-0 bg-gradient-to-b from-[var(--accent-primary)]/20 via-[var(--border)] to-[var(--accent-secondary)]/20" />
 
         {/* ------------------------------------------------------------------ */}
-        {/* Search                                                             */}
+        {/* Search with vibrant focus states                                   */}
         {/* ------------------------------------------------------------------ */}
 
         <div className="flex min-w-0 flex-1 justify-center">
@@ -284,14 +283,14 @@ export function Topbar() {
                 duration: 0.18,
               }}
               aria-hidden="true"
-              className="pointer-events-none absolute -inset-px rounded-xl bg-[var(--control-hover)] blur-sm"
+              className="pointer-events-none absolute -inset-px rounded-xl bg-gradient-to-r from-[var(--accent-primary)]/10 via-[var(--accent-secondary)]/10 to-[var(--accent-primary)]/10 blur-md"
             />
 
             <div
-              className={`relative flex h-10 items-center overflow-visible rounded-xl border bg-[var(--control-background)] transition-colors duration-200 ${
+              className={`relative flex h-10 items-center overflow-hidden rounded-xl border bg-gradient-to-br from-[var(--control-background)] to-[var(--control-hover)] transition-all duration-200 ${
                 searchFocused
-                  ? "border-[var(--foreground-faint)] bg-[var(--control-hover)]"
-                  : "border-[var(--border)] hover:border-[var(--foreground-faint)]"
+                  ? "border-[var(--accent-secondary)]/40 shadow-[0_0_0_4px_rgba(99,102,241,0.08),0_8px_30px_rgba(6,182,212,0.12)]"
+                  : "border-[var(--border)] hover:border-[var(--accent-primary)]/30"
               }`}
             >
               <HugeiconsIcon
@@ -300,7 +299,7 @@ export function Topbar() {
                 strokeWidth={1.5}
                 className={`ml-3.5 shrink-0 transition-colors duration-200 ${
                   searchFocused
-                    ? "text-[var(--foreground-muted)]"
+                    ? "text-[var(--accent-secondary)]"
                     : "text-[var(--foreground-subtle)]"
                 }`}
               />
@@ -327,10 +326,6 @@ export function Topbar() {
                   )
                 }
                 onBlur={() => {
-                  /*
-                   * Delay closing so a result button can
-                   * receive its click before the dropdown disappears.
-                   */
                   window.setTimeout(
                     () => {
                       setSearchFocused(
@@ -382,7 +377,7 @@ export function Topbar() {
                     clearSearch
                   }
                   aria-label="Clear search"
-                  className="mr-1 flex size-7 shrink-0 items-center justify-center rounded-lg text-[var(--foreground-subtle)] transition-colors hover:bg-[var(--control-hover)] hover:text-[var(--foreground-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--foreground-faint)]"
+                  className="mr-1 flex size-7 shrink-0 items-center justify-center rounded-lg text-[var(--foreground-subtle)] transition-colors hover:bg-[var(--control-hover)] hover:text-[var(--accent-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)]/40"
                 >
                   <HugeiconsIcon
                     icon={
@@ -400,7 +395,7 @@ export function Topbar() {
                     }
                   </span>
 
-                  <span>
+                  <span className="text-[var(--accent-primary)]">
                     K
                   </span>
                 </div>
@@ -408,7 +403,7 @@ export function Topbar() {
             </div>
 
             {/* ---------------------------------------------------------------- */}
-            {/* Search results                                                    */}
+            {/* Search results with enhanced styling                            */}
             {/* ---------------------------------------------------------------- */}
 
             <AnimatePresence>
@@ -432,13 +427,13 @@ export function Topbar() {
                   transition={{
                     duration: 0.16,
                   }}
-                  className="absolute inset-x-0 top-[calc(100%+8px)] z-50 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] shadow-[0_20px_50px_rgba(0,0,0,0.18)] backdrop-blur-xl"
+                  className="absolute inset-x-0 top-[calc(100%+8px)] z-50 overflow-hidden rounded-2xl border border-[var(--accent-primary)]/20 bg-[var(--surface-elevated)] shadow-[0_20px_60px_rgba(15,23,42,0.25),0_0_0_1px_rgba(99,102,241,0.08)] backdrop-blur-xl"
                 >
                   {searchLoading && (
                     <div className="flex items-center gap-3 px-4 py-4">
                       <span className="relative flex size-2">
-                        <span className="absolute size-full animate-ping rounded-full bg-emerald-400/25" />
-                        <span className="relative size-2 rounded-full bg-emerald-400" />
+                        <span className="absolute size-full animate-ping rounded-full bg-[var(--accent-secondary)]/25" />
+                        <span className="relative size-2 rounded-full bg-gradient-to-br from-[var(--accent-secondary)] to-[var(--accent-primary)] shadow-[0_0_8px_rgba(6,182,212,0.4)]" />
                       </span>
 
                       <span className="text-xs text-[var(--foreground-muted)]">
@@ -450,7 +445,7 @@ export function Topbar() {
                   {!searchLoading &&
                     searchError && (
                       <div className="px-4 py-4">
-                        <p className="text-xs text-red-300/75">
+                        <p className="text-xs text-red-400/80">
                           {
                             searchError
                           }
@@ -478,7 +473,7 @@ export function Topbar() {
                     searchResults.length >
                       0 && (
                       <div className="p-1.5">
-                        <div className="px-2.5 py-2 text-[9px] font-semibold uppercase tracking-[0.16em] text-[var(--foreground-faint)]">
+                        <div className="px-2.5 py-2 text-[9px] font-semibold uppercase tracking-[0.16em] text-[var(--accent-primary)]/60">
                           Locations
                         </div>
 
@@ -517,9 +512,9 @@ export function Topbar() {
                                       result,
                                     )
                                   }
-                                  className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-[var(--control-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--foreground-faint)]"
+                                  className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all hover:bg-gradient-to-r hover:from-[var(--control-hover)] hover:to-[var(--accent-glow)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)]/40"
                                 >
-                                  <div className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--control-background)]">
+                                  <div className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-[var(--border)] bg-gradient-to-br from-[var(--control-background)] to-[var(--control-hover)] transition-colors group-hover:border-[var(--accent-secondary)]/30">
                                     <HugeiconsIcon
                                       icon={
                                         Location01Icon
@@ -530,13 +525,13 @@ export function Topbar() {
                                       strokeWidth={
                                         1.5
                                       }
-                                      className="text-[var(--foreground-subtle)] transition-colors group-hover:text-[var(--foreground-secondary)]"
+                                      className="text-[var(--foreground-subtle)] transition-colors group-hover:text-[var(--accent-secondary)]"
                                     />
                                   </div>
 
                                   <div className="min-w-0 flex-1">
                                     <div className="flex items-center gap-2">
-                                      <p className="truncate text-xs font-medium text-[var(--foreground-secondary)]">
+                                      <p className="truncate text-xs font-medium text-[var(--foreground-secondary)] group-hover:text-[var(--foreground)]">
                                         {
                                           result.name
                                         }
@@ -558,7 +553,7 @@ export function Topbar() {
                                     </p>
                                   </div>
 
-                                  <span className="shrink-0 text-[10px] text-[var(--foreground-faint)] opacity-0 transition-opacity group-hover:opacity-100">
+                                  <span className="shrink-0 text-[10px] text-[var(--accent-secondary)] opacity-0 transition-all group-hover:opacity-100 group-hover:translate-x-0.5">
                                     →
                                   </span>
                                 </button>
@@ -574,28 +569,28 @@ export function Topbar() {
           </div>
         </div>
 
-        {/* Divider */}
-        <div className="h-8 w-px shrink-0 bg-[var(--border)]" />
+        {/* Divider with gradient */}
+        <div className="relative h-8 w-px shrink-0 bg-gradient-to-b from-[var(--accent-primary)]/20 via-[var(--border)] to-[var(--accent-secondary)]/20" />
 
         {/* ------------------------------------------------------------------ */}
-        {/* Right actions                                                       */}
+        {/* Right actions with vibrant accents                                 */}
         {/* ------------------------------------------------------------------ */}
 
         <div className="flex shrink-0 items-center gap-2">
-          {/* Live data */}
-          <div className="hidden items-center gap-2 rounded-full border border-emerald-400/10 bg-emerald-400/[0.035] px-3 py-1.5 md:flex">
+          {/* Live data with enhanced glow */}
+          <div className="hidden items-center gap-2 rounded-full border border-[var(--accent-secondary)]/20 bg-gradient-to-r from-emerald-400/[0.06] to-[var(--accent-secondary)]/[0.04] px-3 py-1.5 md:flex">
             <span className="relative flex size-1.5">
               <span className="absolute size-full animate-ping rounded-full bg-emerald-400/25" />
 
-              <span className="relative size-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.3)]" />
+              <span className="relative size-1.5 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-500 shadow-[0_0_10px_rgba(52,211,153,0.5)]" />
             </span>
 
-            <span className="text-[10px] font-medium text-emerald-300/65">
+            <span className="text-[10px] font-medium text-emerald-400/80">
               Live data
             </span>
           </div>
 
-          {/* Theme */}
+          {/* Theme toggle with gradient hover */}
           <motion.button
             type="button"
             whileTap={{
@@ -615,8 +610,11 @@ export function Topbar() {
                 ? "Switch to light theme"
                 : "Switch to dark theme"
             }
-            className="flex size-9 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--control-background)] text-[var(--foreground-muted)] outline-none transition-colors hover:border-[var(--foreground-faint)] hover:bg-[var(--control-hover)] hover:text-[var(--foreground-secondary)] focus-visible:ring-2 focus-visible:ring-[var(--foreground-faint)]"
+            className="group relative flex size-9 items-center justify-center rounded-xl border border-[var(--border)] bg-gradient-to-br from-[var(--control-background)] to-[var(--control-hover)] text-[var(--foreground-muted)] outline-none transition-all hover:border-[var(--accent-primary)]/30 hover:shadow-[0_0_15px_rgba(99,102,241,0.15)] focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)]/40"
           >
+            {/* Subtle gradient background on hover */}
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[var(--accent-primary)]/0 to-[var(--accent-secondary)]/0 opacity-0 transition-opacity group-hover:opacity-10" />
+            
             <AnimatePresence
               mode="wait"
               initial={false}
@@ -652,6 +650,7 @@ export function Topbar() {
                   }
                   size={17}
                   strokeWidth={1.5}
+                  className="transition-colors group-hover:text-[var(--accent-primary)]"
                 />
               </motion.span>
             </AnimatePresence>
@@ -659,7 +658,7 @@ export function Topbar() {
         </div>
       </div>
 
-      {/* Search focus accent */}
+      {/* Search focus accent with gradient */}
       <motion.div
         aria-hidden="true"
         initial={{
@@ -675,7 +674,7 @@ export function Topbar() {
         transition={{
           duration: 0.25,
         }}
-        className="pointer-events-none absolute bottom-[-1px] left-1/2 h-px w-40 origin-center -translate-x-1/2 bg-[var(--foreground-secondary)]/30"
+        className="pointer-events-none absolute bottom-[-1px] left-1/2 h-px w-40 origin-center -translate-x-1/2 bg-gradient-to-r from-[var(--accent-primary)] via-[var(--accent-secondary)] to-[var(--accent-primary)]"
       />
     </header>
   );

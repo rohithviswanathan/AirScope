@@ -6,6 +6,7 @@ import {
   WindPower01Icon,
   ArrowUp01Icon,
   ArrowDown01Icon,
+  Refresh01Icon
 } from "@hugeicons/core-free-icons";
 
 import { AQIHero } from "../airquality/components/AQIHero";
@@ -122,35 +123,48 @@ function getPollutantStatus(
 function DashboardLoadingState() {
   return (
     <div className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-      <div className="animate-pulse space-y-7">
+      <div className="space-y-7">
+        {/* Header skeleton with gradient shimmer */}
         <div className="space-y-3">
-          <div className="h-3 w-20 rounded bg-[var(--control-hover)]" />
-
+          <div className="flex items-center gap-2">
+            <div className="h-3 w-20 rounded bg-[var(--control-hover)]" />
+            <div className="h-3 w-16 rounded bg-[var(--control-background)]" />
+          </div>
+          
           <div className="h-10 w-72 max-w-full rounded-xl bg-[var(--control-hover)]" />
-
-          <div className="h-4 w-[520px] max-w-full rounded bg-[var(--control-hover)]" />
+          
+          <div className="h-4 w-[520px] max-w-full rounded bg-[var(--control-background)]" />
         </div>
 
-        <div className="h-[580px] rounded-[28px] border border-[var(--border)] bg-[var(--surface-secondary)]" />
+        {/* Main AQI card skeleton */}
+        <div className="relative h-[580px] overflow-hidden rounded-[28px] border border-[var(--border)] bg-gradient-to-br from-[var(--surface-secondary)] via-[var(--surface)] to-[var(--surface-secondary)]">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--control-hover)]/30 to-transparent animate-shimmer" />
+        </div>
 
+        {/* Environment cards skeleton */}
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {Array.from({ length: 4 }).map(
             (_, index) => (
               <div
                 key={index}
-                className="h-32 rounded-2xl border border-[var(--border)] bg-[var(--surface-secondary)]"
-              />
+                className="relative h-32 overflow-hidden rounded-2xl border border-[var(--border)] bg-gradient-to-br from-[var(--surface-secondary)] to-[var(--surface)]"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--control-hover)]/20 to-transparent animate-shimmer" style={{ animationDelay: `${index * 0.15}s` }} />
+              </div>
             ),
           )}
         </div>
 
+        {/* Pollutant cards skeleton */}
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {Array.from({ length: 4 }).map(
             (_, index) => (
               <div
                 key={index}
-                className="h-48 rounded-2xl border border-[var(--border)] bg-[var(--surface)]"
-              />
+                className="relative h-48 overflow-hidden rounded-2xl border border-[var(--border)] bg-gradient-to-br from-[var(--surface)] to-[var(--surface-secondary)]"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--control-hover)]/20 to-transparent animate-shimmer" style={{ animationDelay: `${index * 0.15 + 0.2}s` }} />
+              </div>
             ),
           )}
         </div>
@@ -168,27 +182,47 @@ function DashboardErrorState({
 }) {
   return (
     <div className="mx-auto flex min-h-[600px] w-full max-w-[1600px] items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md rounded-3xl border border-red-400/15 bg-red-400/[0.035] p-6 text-center">
-        <div className="mx-auto flex size-10 items-center justify-center rounded-xl bg-red-400/[0.08] text-red-300/80">
-          !
+      <motion.div
+        initial={{ opacity: 0, y: 16, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        className="w-full max-w-md"
+      >
+        <div className="relative overflow-hidden rounded-3xl border border-[var(--error)]/20 bg-gradient-to-br from-[var(--error-bg)] via-[var(--surface-secondary)] to-[var(--error-bg)]/50 p-6 text-center shadow-[0_8px_40px_rgba(220,38,38,0.08)]">
+          {/* Subtle gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[var(--error)]/[0.02] to-transparent pointer-events-none" />
+          
+          {/* Icon with glow */}
+          <div className="relative mx-auto flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--error)]/15 to-[var(--error)]/8 shadow-[0_0_24px_rgba(220,38,38,0.15)]">
+            <span className="text-xl font-bold text-[var(--error)]">!</span>
+          </div>
+
+          <h1 className="relative mt-5 text-lg font-semibold tracking-[-0.02em] text-[var(--foreground)]">
+            Unable to load air quality
+          </h1>
+
+          <p className="relative mt-2.5 text-sm leading-6 text-[var(--foreground-muted)]">
+            {message}
+          </p>
+
+          <motion.button
+            type="button"
+            onClick={onRetry}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            className="relative mt-6 inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-gradient-to-r from-[var(--control-background)] to-[var(--control-hover)] px-5 py-2.5 text-sm font-medium text-[var(--foreground)] transition-all hover:border-[var(--foreground-faint)] hover:shadow-[0_4px_16px_rgba(148,163,184,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)]/40"
+          >
+            <HugeiconsIcon
+              icon={Refresh01Icon}
+              size={16}
+              strokeWidth={1.8}
+              className="text-[var(--foreground-muted)]"
+            />
+            Try again
+          </motion.button>
         </div>
-
-        <h1 className="mt-4 text-lg font-semibold tracking-[-0.02em] text-[var(--foreground)]">
-          Unable to load air quality
-        </h1>
-
-        <p className="mt-2 text-sm leading-6 text-[var(--foreground-muted)]">
-          {message}
-        </p>
-
-        <button
-          type="button"
-          onClick={onRetry}
-          className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--control-background)] px-4 py-2.5 text-sm font-medium text-[var(--foreground-secondary)] transition-colors hover:bg-[var(--control-hover)]"
-        >
-          Try again
-        </button>
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -268,7 +302,13 @@ export function Dashboard() {
   const windUnit = "km/h";
 
   return (
-    <div className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+    <div className="relative mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      {/* Subtle background gradient mesh */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 size-[500px] rounded-full bg-gradient-to-br from-[var(--accent-primary)]/[0.03] to-[var(--accent-secondary)]/[0.02] blur-[100px]" />
+        <div className="absolute top-[30%] -left-40 size-[400px] rounded-full bg-gradient-to-tr from-[var(--accent-secondary)]/[0.025] to-[var(--accent-tertiary)]/[0.02] blur-[90px]" />
+      </div>
+
       <motion.div
         initial={{
           opacity: 0,
@@ -282,14 +322,16 @@ export function Dashboard() {
           duration: 0.55,
           ease: [0.22, 1, 0.36, 1],
         }}
+        className="relative"
       >
         {/* ─────────────────────────────────────────────
-            Page heading
+            Page heading with enhanced styling
         ───────────────────────────────────────────── */}
         <header className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
           <div className="min-w-0">
-            <div className="mb-2 flex flex-wrap items-center gap-2">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--foreground-subtle)]">
+            <div className="mb-2.5 flex flex-wrap items-center gap-2.5">
+              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--control-background)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--foreground-subtle)]">
+                <span className="size-1.5 rounded-full bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] shadow-[0_0_6px_rgba(99,102,241,0.3)]" />
                 Overview
               </span>
 
@@ -304,24 +346,28 @@ export function Dashboard() {
               {data.location.name} air quality
             </h1>
 
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--foreground-muted)]">
+            <p className="mt-2.5 max-w-2xl text-sm leading-6 text-[var(--foreground-muted)]">
               A live view of the atmosphere around you,
               from current pollution levels to emerging
               trends.
             </p>
           </div>
 
-          <div className="flex w-fit shrink-0 items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--control-background)] px-3 py-2 transition-colors duration-200">
-            <span className="relative flex size-2">
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            className="group flex w-fit shrink-0 items-center gap-2.5 rounded-full border border-[var(--border)] bg-gradient-to-r from-[var(--control-background)] to-[var(--control-hover)] px-3.5 py-2 transition-all hover:border-[var(--foreground-faint)] hover:shadow-[0_4px_16px_rgba(148,163,184,0.12)]"
+          >
+            <span className="relative flex size-2.5">
               <span
-                className={`absolute size-full rounded-full bg-emerald-400/30 ${
+                className={`absolute size-full rounded-full bg-gradient-to-br from-emerald-400 to-emerald-500/80 shadow-[0_0_8px_rgba(52,211,153,0.4)] ${
                   !isFetching
                     ? "animate-ping"
                     : "animate-pulse"
                 }`}
               />
 
-              <span className="relative size-2 rounded-full bg-emerald-400" />
+              <span className="relative size-2.5 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-500 shadow-[0_0_10px_rgba(52,211,153,0.5)]" />
             </span>
 
             <span className="text-[11px] font-medium text-[var(--foreground-secondary)]">
@@ -329,7 +375,7 @@ export function Dashboard() {
                 ? "Updating data"
                 : "Monitoring active"}
             </span>
-          </div>
+          </motion.div>
         </header>
 
         {/* ─────────────────────────────────────────────
@@ -350,23 +396,32 @@ export function Dashboard() {
         </section>
 
         {/* ─────────────────────────────────────────────
-            Environment
+            Environment with section header enhancement
         ───────────────────────────────────────────── */}
-        <section className="mt-5">
-          <div className="mb-3 px-1">
-            <p className="text-sm font-medium text-[var(--foreground-secondary)]">
-              Environmental conditions
-            </p>
-
-            <p className="mt-1 text-xs text-[var(--foreground-muted)]">
-              Conditions that can influence local air quality
-            </p>
+        <section className="mt-8">
+          <div className="mb-4 flex items-center gap-3 px-1">
+            <div className="h-px w-8 bg-gradient-to-r from-[var(--accent-primary)]/40 to-transparent" />
+            <div>
+              <p className="text-sm font-medium text-[var(--foreground-secondary)]">
+                Environmental conditions
+              </p>
+              <p className="mt-0.5 text-xs text-[var(--foreground-muted)]">
+                Conditions that can influence local air quality
+              </p>
+            </div>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {/* Temperature */}
-            <div className="group rounded-2xl border border-[var(--border)] bg-[var(--surface-secondary)] p-5 transition-colors duration-200 hover:border-[var(--foreground-faint)] hover:bg-[var(--surface-elevated)]">
-              <div className="flex items-start justify-between gap-4">
+            <motion.div
+              whileHover={{ y: -2 }}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              className="group relative overflow-hidden rounded-2xl border border-[var(--border)] bg-gradient-to-br from-[var(--surface-secondary)] via-[var(--surface)] to-[var(--surface-secondary)] p-5 transition-all duration-200 hover:border-[var(--foreground-faint)] hover:shadow-[0_8px_24px_rgba(148,163,184,0.12)]"
+            >
+              {/* Subtle gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-primary)]/[0.02] to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100 pointer-events-none" />
+              
+              <div className="relative flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--foreground-subtle)]">
                     Temperature
@@ -381,7 +436,7 @@ export function Dashboard() {
                   </div>
                 </div>
 
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[var(--control-background)] transition-colors duration-200 group-hover:bg-[var(--control-hover)]">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--control-background)] to-[var(--control-hover)] transition-all duration-200 group-hover:shadow-[0_4px_12px_rgba(148,163,184,0.15)]">
                   <HugeiconsIcon
                     icon={CloudIcon}
                     size={19}
@@ -391,7 +446,7 @@ export function Dashboard() {
                 </div>
               </div>
 
-              <p className="mt-3 truncate text-xs text-[var(--foreground-muted)]">
+              <p className="relative mt-3 truncate text-xs text-[var(--foreground-muted)]">
                 Feels like{" "}
                 {formatNumber(
                   data.weather
@@ -399,11 +454,17 @@ export function Dashboard() {
                 )}
                 °
               </p>
-            </div>
+            </motion.div>
 
             {/* Humidity */}
-            <div className="group rounded-2xl border border-[var(--border)] bg-[var(--surface-secondary)] p-5 transition-colors duration-200 hover:border-[var(--foreground-faint)] hover:bg-[var(--surface-elevated)]">
-              <div className="flex items-start justify-between gap-4">
+            <motion.div
+              whileHover={{ y: -2 }}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              className="group relative overflow-hidden rounded-2xl border border-[var(--border)] bg-gradient-to-br from-[var(--surface-secondary)] via-[var(--surface)] to-[var(--surface-secondary)] p-5 transition-all duration-200 hover:border-[var(--foreground-faint)] hover:shadow-[0_8px_24px_rgba(148,163,184,0.12)]"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-secondary)]/[0.02] to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100 pointer-events-none" />
+              
+              <div className="relative flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--foreground-subtle)]">
                     Humidity
@@ -419,7 +480,7 @@ export function Dashboard() {
                   </div>
                 </div>
 
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[var(--control-background)] transition-colors duration-200 group-hover:bg-[var(--control-hover)]">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--control-background)] to-[var(--control-hover)] transition-all duration-200 group-hover:shadow-[0_4px_12px_rgba(148,163,184,0.15)]">
                   <HugeiconsIcon
                     icon={DropletIcon}
                     size={19}
@@ -429,14 +490,20 @@ export function Dashboard() {
                 </div>
               </div>
 
-              <p className="mt-3 truncate text-xs text-[var(--foreground-muted)]">
+              <p className="relative mt-3 truncate text-xs text-[var(--foreground-muted)]">
                 Relative atmospheric humidity
               </p>
-            </div>
+            </motion.div>
 
             {/* Wind */}
-            <div className="group rounded-2xl border border-[var(--border)] bg-[var(--surface-secondary)] p-5 transition-colors duration-200 hover:border-[var(--foreground-faint)] hover:bg-[var(--surface-elevated)]">
-              <div className="flex items-start justify-between gap-4">
+            <motion.div
+              whileHover={{ y: -2 }}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              className="group relative overflow-hidden rounded-2xl border border-[var(--border)] bg-gradient-to-br from-[var(--surface-secondary)] via-[var(--surface)] to-[var(--surface-secondary)] p-5 transition-all duration-200 hover:border-[var(--foreground-faint)] hover:shadow-[0_8px_24px_rgba(148,163,184,0.12)]"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-tertiary)]/[0.02] to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100 pointer-events-none" />
+              
+              <div className="relative flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--foreground-subtle)]">
                     Wind
@@ -455,7 +522,7 @@ export function Dashboard() {
                   </div>
                 </div>
 
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[var(--control-background)] transition-colors duration-200 group-hover:bg-[var(--control-hover)]">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--control-background)] to-[var(--control-hover)] transition-all duration-200 group-hover:shadow-[0_4px_12px_rgba(148,163,184,0.15)]">
                   <HugeiconsIcon
                     icon={WindPower01Icon}
                     size={19}
@@ -465,18 +532,24 @@ export function Dashboard() {
                 </div>
               </div>
 
-              <p className="mt-3 truncate text-xs text-[var(--foreground-muted)]">
+              <p className="relative mt-3 truncate text-xs text-[var(--foreground-muted)]">
                 {data.weather.windDirectionLabel} direction ·{" "}
                 {Math.round(
                   data.weather.windDirection,
                 )}
                 °
               </p>
-            </div>
+            </motion.div>
 
             {/* Visibility */}
-            <div className="group rounded-2xl border border-[var(--border)] bg-[var(--surface-secondary)] p-5 transition-colors duration-200 hover:border-[var(--foreground-faint)] hover:bg-[var(--surface-elevated)]">
-              <div className="flex items-start justify-between gap-4">
+            <motion.div
+              whileHover={{ y: -2 }}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              className="group relative overflow-hidden rounded-2xl border border-[var(--border)] bg-gradient-to-br from-[var(--surface-secondary)] via-[var(--surface)] to-[var(--surface-secondary)] p-5 transition-all duration-200 hover:border-[var(--foreground-faint)] hover:shadow-[0_8px_24px_rgba(148,163,184,0.12)]"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-primary)]/[0.02] to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100 pointer-events-none" />
+              
+              <div className="relative flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--foreground-subtle)]">
                     Visibility
@@ -495,42 +568,45 @@ export function Dashboard() {
                   </div>
                 </div>
 
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[var(--control-background)]">
-                  <div className="size-2 rounded-full bg-[var(--foreground-muted)] transition-transform duration-200 group-hover:scale-125" />
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--control-background)] to-[var(--control-hover)] transition-all duration-200 group-hover:shadow-[0_4px_12px_rgba(148,163,184,0.15)]">
+                  <div className="size-2 rounded-full bg-gradient-to-br from-[var(--foreground-muted)] to-[var(--foreground-subtle)] transition-transform duration-200 group-hover:scale-125" />
                 </div>
               </div>
 
-              <p className="mt-3 truncate text-xs text-[var(--foreground-muted)]">
+              <p className="relative mt-3 truncate text-xs text-[var(--foreground-muted)]">
                 Current atmospheric visibility
               </p>
-            </div>
+            </motion.div>
           </div>
         </section>
 
         {/* ─────────────────────────────────────────────
-            Pollutants
+            Pollutants with enhanced section header
         ───────────────────────────────────────────── */}
-        <section className="mt-7">
-          <div className="mb-4 flex items-end justify-between px-1">
-            <div>
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-medium text-[var(--foreground-secondary)]">
-                  Pollutant levels
+        <section className="mt-10">
+          <div className="mb-5 flex items-end justify-between px-1">
+            <div className="flex items-center gap-3">
+              <div className="h-px w-8 bg-gradient-to-r from-[var(--accent-secondary)]/40 to-transparent" />
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <p className="text-sm font-medium text-[var(--foreground-secondary)]">
+                    Pollutant levels
+                  </p>
+
+                  <span className="size-1.5 rounded-full bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] shadow-[0_0_6px_rgba(99,102,241,0.3)]" />
+
+                  <span className="text-[10px] uppercase tracking-[0.12em] text-[var(--foreground-faint)]">
+                    Live snapshot
+                  </span>
+                </div>
+
+                <p className="mt-1 text-xs text-[var(--foreground-muted)]">
+                  Current measured concentration across key pollutants
                 </p>
-
-                <span className="size-1 rounded-full bg-[var(--foreground-faint)]" />
-
-                <span className="text-[10px] uppercase tracking-[0.12em] text-[var(--foreground-faint)]">
-                  Live snapshot
-                </span>
               </div>
-
-              <p className="mt-1 text-xs text-[var(--foreground-muted)]">
-                Current measured concentration across key pollutants
-              </p>
             </div>
 
-            <span className="hidden text-[10px] uppercase tracking-[0.14em] text-[var(--foreground-faint)] sm:block">
+            <span className="hidden rounded-full border border-[var(--border)] bg-[var(--control-background)] px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--foreground-subtle)] sm:block">
               µg/m³
             </span>
           </div>
@@ -579,15 +655,19 @@ export function Dashboard() {
                     }}
                     whileHover={{
                       y: -3,
+                      scale: 1.01,
                     }}
-                    className="group rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 transition-colors duration-200 hover:border-[var(--foreground-faint)] hover:bg-[var(--surface-secondary)]"
+                    className="group relative overflow-hidden rounded-2xl border border-[var(--border)] bg-gradient-to-br from-[var(--surface)] via-[var(--surface-secondary)] to-[var(--surface)] p-5 transition-all duration-200 hover:border-[var(--foreground-faint)] hover:shadow-[0_8px_32px_rgba(148,163,184,0.14)]"
                   >
+                    {/* Subtle accent gradient overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-primary)]/[0.02] via-transparent to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100 pointer-events-none" />
+
                     {/* Header */}
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="relative flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2.5">
                           <span
-                            className={`size-2 shrink-0 rounded-full ${pollutant.color}`}
+                            className={`size-2.5 shrink-0 rounded-full ${pollutant.color} shadow-[0_0_8px_currentColor]`}
                           />
 
                           <span className="text-sm font-semibold tracking-[-0.02em] text-[var(--foreground-secondary)]">
@@ -600,13 +680,13 @@ export function Dashboard() {
                         </p>
                       </div>
 
-                      <div className="shrink-0 rounded-full border border-[var(--border-subtle)] bg-[var(--control-background)] px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.1em] text-[var(--foreground-muted)]">
+                      <div className="shrink-0 rounded-full border border-[var(--border-subtle)] bg-gradient-to-br from-[var(--control-background)] to-[var(--control-hover)] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.1em] text-[var(--foreground-muted)] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
                         {relativeStatus}
                       </div>
                     </div>
 
                     {/* Value */}
-                    <div className="mt-6">
+                    <div className="relative mt-6">
                       <div className="flex items-end gap-1.5">
                         <span className="text-[34px] font-semibold leading-none tracking-[-0.055em] text-[var(--foreground)]">
                           {formatNumber(
@@ -621,7 +701,7 @@ export function Dashboard() {
                     </div>
 
                     {/* Live reading */}
-                    <div className="mt-4 flex items-center gap-1.5 text-[11px] font-medium text-emerald-300/70">
+                    <div className="relative mt-4 flex items-center gap-1.5 text-[11px] font-medium text-emerald-400/80">
                       {pollutant.value >
                       0 ? (
                         <>
@@ -635,6 +715,7 @@ export function Dashboard() {
                             }
                             size={13}
                             strokeWidth={1.8}
+                            className="text-emerald-400/80"
                           />
 
                           <span>
@@ -649,7 +730,7 @@ export function Dashboard() {
                     </div>
 
                     {/* Visual scale */}
-                    <div className="mt-5">
+                    <div className="relative mt-5">
                       <div className="flex items-center justify-between text-[9px] uppercase tracking-[0.1em] text-[var(--foreground-faint)]">
                         <span>
                           Relative concentration
@@ -660,7 +741,7 @@ export function Dashboard() {
                         </span>
                       </div>
 
-                      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--control-hover)]">
+                      <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-gradient-to-r from-[var(--control-hover)] to-[var(--control-background)] shadow-[inset_0_1px_2px_rgba(0,0,0,0.08)]">
                         <motion.div
                           initial={{
                             width: 0,
@@ -680,13 +761,13 @@ export function Dashboard() {
                               1,
                             ],
                           }}
-                          className={`h-full rounded-full ${pollutant.color}`}
+                          className={`h-full rounded-full ${pollutant.color} shadow-[0_0_8px_currentColor]`}
                         />
                       </div>
                     </div>
 
                     {/* Footer */}
-                    <div className="mt-4 border-t border-[var(--border-subtle)] pt-3">
+                    <div className="relative mt-4 border-t border-[var(--border-subtle)] pt-3">
                       <p className="text-[10px] text-[var(--foreground-subtle)]">
                         {pollutant.description}
                       </p>

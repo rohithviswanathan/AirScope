@@ -89,6 +89,16 @@ function getThemeColors() {
         .getPropertyValue("--control-hover")
         .trim() ||
       "rgba(255,255,255,0.05)",
+
+    accentPrimary:
+      styles
+        .getPropertyValue("--accent-primary")
+        .trim() || "#818cf8",
+
+    accentSecondary:
+      styles
+        .getPropertyValue("--accent-secondary")
+        .trim() || "#38bdf8",
   };
 }
 
@@ -379,15 +389,15 @@ export function PollutionDrivers() {
 
             emphasis: {
               scale: true,
-              scaleSize: 5,
+              scaleSize: 6,
 
               itemStyle: {
-                shadowBlur: 20,
+                shadowBlur: 24,
 
                 shadowColor:
                   theme === "light"
-                    ? "rgba(15,23,42,0.14)"
-                    : "rgba(0,0,0,0.25)",
+                    ? "rgba(15,23,42,0.16)"
+                    : "rgba(0,0,0,0.28)",
               },
             },
 
@@ -409,7 +419,10 @@ export function PollutionDrivers() {
                     activeIndex ===
                       index
                       ? 1
-                      : 0.25,
+                      : 0.28,
+
+                  shadowBlur: activeIndex === index ? 16 : 0,
+                  shadowColor: pollutant.color,
                 },
               }),
             ),
@@ -530,13 +543,24 @@ export function PollutionDrivers() {
 
   if (isLoading) {
     return (
-      <section className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6">
+      <motion.section
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        className="relative overflow-hidden rounded-3xl border border-[var(--border)] bg-gradient-to-br from-[var(--surface)] via-[var(--surface-secondary)] to-[var(--surface)] p-6"
+      >
         <div className="animate-pulse">
-          <div className="h-4 w-40 rounded bg-[var(--control-hover)]" />
-          <div className="mt-2 h-3 w-72 rounded bg-[var(--control-hover)]" />
+          <div className="flex items-center gap-2">
+            <div className="h-4 w-40 rounded bg-[var(--control-hover)]" />
+            <div className="h-4 w-24 rounded bg-[var(--control-background)]" />
+          </div>
+          
+          <div className="mt-2 h-3 w-72 rounded bg-[var(--control-background)]" />
 
           <div className="mt-8 grid gap-8 lg:grid-cols-[230px_minmax(0,1fr)]">
-            <div className="mx-auto size-[210px] rounded-full bg-[var(--control-background)]" />
+            <div className="relative mx-auto size-[210px] overflow-hidden rounded-full bg-gradient-to-br from-[var(--control-background)] to-[var(--control-hover)]">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--foreground-faint)]/10 to-transparent animate-shimmer" />
+            </div>
 
             <div className="space-y-3">
               {Array.from({
@@ -544,27 +568,42 @@ export function PollutionDrivers() {
               }).map((_, index) => (
                 <div
                   key={index}
-                  className="h-20 rounded-2xl bg-[var(--control-background)]"
-                />
+                  className="relative h-20 overflow-hidden rounded-2xl bg-gradient-to-br from-[var(--control-background)] to-[var(--control-hover)]"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--foreground-faint)]/10 to-transparent animate-shimmer" style={{ animationDelay: `${index * 0.12}s` }} />
+                </div>
               ))}
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
     );
   }
 
   if (isError || !data) {
     return (
-      <section className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6">
-        <p className="text-sm font-medium text-[var(--foreground-secondary)]">
-          Pollution profile unavailable
-        </p>
+      <motion.section
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        className="h-full rounded-3xl border border-[var(--border)] bg-gradient-to-br from-[var(--surface)] via-[var(--surface-secondary)] to-[var(--surface)] p-6"
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--error)]/15 to-[var(--error)]/8 shadow-[0_0_16px_rgba(220,38,38,0.12)]">
+            <span className="text-lg font-bold text-[var(--error)]">!</span>
+          </div>
+          
+          <div>
+            <p className="text-sm font-medium text-[var(--foreground-secondary)]">
+              Pollution profile unavailable
+            </p>
 
-        <p className="mt-1 text-xs text-[var(--foreground-muted)]">
-          Current pollutant data could not be loaded.
-        </p>
-      </section>
+            <p className="mt-1 text-xs text-[var(--foreground-muted)]">
+              Current pollutant data could not be loaded.
+            </p>
+          </div>
+        </div>
+      </motion.section>
     );
   }
 
@@ -587,16 +626,22 @@ export function PollutionDrivers() {
           1,
         ],
       }}
-      className="overflow-hidden rounded-3xl border border-[var(--border)] bg-[var(--surface)] transition-colors duration-200"
+      className="relative overflow-hidden rounded-3xl border border-[var(--border)] bg-gradient-to-br from-[var(--surface)] via-[var(--surface-secondary)] to-[var(--surface)] transition-colors duration-200 shadow-[0_8px_32px_rgba(15,23,42,0.12)]"
     >
-      <div className="p-5 sm:p-6">
-        {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      {/* Subtle gradient mesh overlay */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[var(--accent-primary)]/[0.015] via-transparent to-transparent opacity-60" />
+
+      <div className="relative p-5 sm:p-6">
+        {/* Header with enhanced styling */}
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <div className="flex items-center gap-2">
-              <p className="text-sm font-medium text-[var(--foreground-secondary)]">
-                Pollutant profile
-              </p>
+            <div className="flex items-center gap-2.5">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--control-background)] px-2.5 py-1">
+                <span className="size-1.5 rounded-full bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] shadow-[0_0_6px_rgba(99,102,241,0.3)]" />
+                <p className="text-sm font-medium text-[var(--foreground-secondary)]">
+                  Pollutant profile
+                </p>
+              </div>
 
               <HugeiconsIcon
                 icon={
@@ -607,35 +652,51 @@ export function PollutionDrivers() {
                 className="text-[var(--foreground-faint)]"
               />
 
-              <span className="size-1 rounded-full bg-[var(--foreground-faint)]" />
+              <span className="size-1 shrink-0 rounded-full bg-[var(--foreground-faint)]" />
 
               <span className="text-[9px] uppercase tracking-[0.12em] text-[var(--foreground-faint)]">
                 Live concentrations
               </span>
             </div>
 
-            <p className="mt-1 text-xs leading-5 text-[var(--foreground-muted)]">
+            <p className="mt-1.5 text-xs leading-5 text-[var(--foreground-muted)]">
               Current pollutant concentrations reported by the air-quality service.
             </p>
           </div>
 
           {dominantPollutant && (
-            <div className="w-fit rounded-xl border border-orange-400/10 bg-orange-400/[0.035] px-3 py-2">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+              className="group w-fit rounded-xl border border-orange-400/20 bg-gradient-to-br from-orange-400/[0.06] to-orange-400/[0.03] px-3.5 py-2 shadow-[inset_0_1px_0_rgba(251,146,60,0.1)]"
+            >
               <p className="text-[9px] font-medium uppercase tracking-[0.12em] text-[var(--foreground-subtle)]">
                 AQI driver
               </p>
 
-              <p className="mt-0.5 text-[11px] font-medium text-orange-300/70">
+              <p className="mt-0.5 text-[11px] font-medium text-orange-400/85 group-hover:text-orange-400">
                 {data.airQuality.dominantPollutant}
               </p>
-            </div>
+            </motion.div>
           )}
         </div>
 
-        {/* Main */}
-        <div className="mt-7 grid gap-8 lg:grid-cols-[230px_minmax(0,1fr)] lg:items-center">
-          {/* Donut */}
+        {/* Main with enhanced layout */}
+        <div className="relative mt-8 grid gap-8 lg:grid-cols-[230px_minmax(0,1fr)] lg:items-center">
+          {/* Donut with enhanced presentation */}
           <div className="relative mx-auto size-[210px] w-full max-w-[210px]">
+            {/* Outer glow ring */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.15 }}
+              className="absolute inset-0 rounded-full"
+              style={{
+                boxShadow: "0 0 60px rgba(249,115,22,0.12), 0 0 100px rgba(249,115,22,0.06)",
+              }}
+            />
+            
             <div
               ref={chartRef}
               className="absolute inset-0 size-full"
@@ -667,7 +728,7 @@ export function PollutionDrivers() {
                     transition={{
                       duration: 0.18,
                     }}
-                    className="mt-1 text-xl font-semibold tracking-[-0.035em] text-[var(--foreground)]"
+                    className="mt-1.5 text-xl font-semibold tracking-[-0.035em] text-[var(--foreground)] drop-shadow-[0_2px_6px_rgba(0,0,0,0.15)]"
                   >
                     {
                       activePollutantData.pollutant
@@ -685,7 +746,7 @@ export function PollutionDrivers() {
                     transition={{
                       duration: 0.18,
                     }}
-                    className="mt-0.5 text-xs font-medium text-orange-300/70"
+                    className="mt-1 text-xs font-medium text-orange-400/90"
                   >
                     {formatNumber(
                       activePollutantData.concentration,
@@ -697,10 +758,10 @@ export function PollutionDrivers() {
             </div>
           </div>
 
-          {/* Pollutant rows */}
+          {/* Pollutant rows with enhanced styling */}
           <div className="space-y-3">
             {pollutants.map(
-              (pollutant) => {
+              (pollutant, index) => {
                 const isActive =
                   activePollutant ===
                   pollutant.id;
@@ -735,6 +796,7 @@ export function PollutionDrivers() {
                     }}
                     transition={{
                       duration: 0.4,
+                      delay: index * 0.05,
                       ease: [
                         0.22,
                         1,
@@ -759,22 +821,30 @@ export function PollutionDrivers() {
                       handleLeave
                     }
                     tabIndex={0}
-                    className={`group rounded-2xl border p-4 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-[var(--foreground-faint)] ${
+                    className={`group relative overflow-hidden rounded-2xl border p-4 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)]/40 ${
                       isActive
-                        ? "border-[var(--foreground-faint)] bg-[var(--control-hover)]"
-                        : "border-transparent bg-transparent hover:border-[var(--border)] hover:bg-[var(--control-background)]"
+                        ? "border-[var(--foreground-faint)] bg-gradient-to-br from-[var(--control-hover)] to-[var(--accent-glow)]/30 shadow-[0_4px_16px_rgba(148,163,184,0.12)]"
+                        : "border-transparent bg-transparent hover:border-[var(--border)] hover:bg-gradient-to-br hover:from-[var(--control-background)] hover:to-[var(--control-hover)]"
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex min-w-0 items-center gap-2.5">
+                    {/* Subtle accent gradient overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-primary)]/[0.02] to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100 pointer-events-none" />
+                    
+                    <div className="relative flex items-center justify-between gap-4">
+                      <div className="flex min-w-0 items-center gap-3">
                         <motion.span
                           animate={{
                             scale:
                               isActive
-                                ? 1.35
+                                ? 1.4
                                 : 1,
                           }}
-                          className="size-2 shrink-0 rounded-full"
+                          transition={{
+                            type: "spring",
+                            stiffness: 400,
+                            damping: 20,
+                          }}
+                          className="size-2.5 shrink-0 rounded-full shadow-[0_0_8px_currentColor]"
                           style={{
                             backgroundColor:
                               pollutant.color,
@@ -782,7 +852,7 @@ export function PollutionDrivers() {
                         />
 
                         <div className="min-w-0">
-                          <p className="text-xs font-medium text-[var(--foreground-secondary)]">
+                          <p className="text-xs font-medium text-[var(--foreground-secondary)] group-hover:text-[var(--foreground)]">
                             {
                               pollutant.pollutant
                             }
@@ -795,7 +865,7 @@ export function PollutionDrivers() {
                       </div>
 
                       <div className="flex shrink-0 items-center gap-3">
-                        <span className="text-xs font-semibold text-[var(--foreground-secondary)]">
+                        <span className="text-xs font-semibold text-[var(--foreground-secondary)] group-hover:text-[var(--foreground)]">
                           {formatNumber(
                             pollutant.concentration,
                           )}{" "}
@@ -805,15 +875,15 @@ export function PollutionDrivers() {
                         {pollutant.pollutant ===
                           data.airQuality
                             .dominantPollutant && (
-                          <span className="rounded-full bg-orange-400/[0.07] px-2 py-1 text-[8px] font-semibold uppercase tracking-[0.1em] text-orange-300/65">
+                          <span className="rounded-full bg-gradient-to-br from-orange-400/[0.12] to-orange-400/[0.06] px-2.5 py-1 text-[8px] font-semibold uppercase tracking-[0.1em] text-orange-400/85 shadow-[inset_0_1px_0_rgba(251,146,60,0.15)]">
                             Driver
                           </span>
                         )}
                       </div>
                     </div>
 
-                    <div className="mt-3 flex items-center gap-3">
-                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--control-hover)]">
+                    <div className="relative mt-3.5 flex items-center gap-3">
+                      <div className="h-2 flex-1 overflow-hidden rounded-full bg-gradient-to-r from-[var(--control-hover)] to-[var(--control-background)] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]">
                         <motion.div
                           initial={{
                             width: 0,
@@ -823,6 +893,7 @@ export function PollutionDrivers() {
                           }}
                           transition={{
                             duration: 0.7,
+                            delay: 0.1 + index * 0.05,
                             ease: [
                               0.22,
                               1,
@@ -830,14 +901,14 @@ export function PollutionDrivers() {
                               1,
                             ],
                           }}
-                          className="h-full rounded-full"
+                          className="h-full rounded-full shadow-[0_0_8px_currentColor]"
                           style={{
                             backgroundColor:
                               pollutant.color,
                             opacity:
                               isActive
                                 ? 1
-                                : 0.72,
+                                : 0.75,
                           }}
                         />
                       </div>
@@ -853,27 +924,32 @@ export function PollutionDrivers() {
           </div>
         </div>
 
-        {/* Insight */}
+        {/* Insight with enhanced styling */}
         {dominantPollutant && (
-          <div className="mt-7 border-t border-[var(--border)] pt-5">
-            <div className="flex items-start gap-3">
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-orange-400/[0.07]">
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.3 }}
+            className="relative mt-8 overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-gradient-to-br from-[var(--control-background)] via-[var(--control-background)] to-orange-400/[0.04] p-4"
+          >
+            <div className="relative flex items-start gap-3">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-orange-400/[0.12] to-orange-400/[0.06] shadow-[inset_0_1px_0_rgba(251,146,60,0.12)]">
                 <HugeiconsIcon
                   icon={Alert02Icon}
-                  size={15}
+                  size={16}
                   strokeWidth={1.5}
-                  className="text-orange-300/65"
+                  className="text-orange-400/85"
                 />
               </div>
 
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="text-xs font-medium text-[var(--foreground-secondary)]">
                   What's influencing the current AQI?
                 </p>
 
-                <p className="mt-1 text-xs leading-5 text-[var(--foreground-muted)]">
+                <p className="mt-1.5 text-xs leading-5 text-[var(--foreground-muted)]">
                   The current AQI data identifies{" "}
-                  <span className="font-medium text-[var(--foreground-secondary)]">
+                  <span className="font-medium text-orange-400/90">
                     {
                       data.airQuality
                         .dominantPollutant
@@ -885,7 +961,7 @@ export function PollutionDrivers() {
                 </p>
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
       </div>
     </motion.section>

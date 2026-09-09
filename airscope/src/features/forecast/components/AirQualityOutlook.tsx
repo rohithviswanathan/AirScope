@@ -75,6 +75,21 @@ function getThemeColors() {
         .getPropertyValue("--chart-grid")
         .trim() ||
       "rgba(255,255,255,0.045)",
+
+    accentPrimary:
+      styles
+        .getPropertyValue("--accent-primary")
+        .trim() || "#818cf8",
+
+    accentSecondary:
+      styles
+        .getPropertyValue("--accent-secondary")
+        .trim() || "#38bdf8",
+
+    accentGlow:
+      styles
+        .getPropertyValue("--accent-glow")
+        .trim() || "rgba(99,102,241,0.15)",
   };
 }
 
@@ -116,7 +131,7 @@ export function AirQualityOutlook() {
     );
 
   const reducedMotion =
-  useReducedMotion();
+    useReducedMotion();
 
   const { theme } =
     useTheme();
@@ -500,12 +515,12 @@ export function AirQualityOutlook() {
             symbol: "none",
 
             lineStyle: {
-              color: "#FB923C",
-              width: 2.2,
+              color: "#FDBA74",
+              width: 2.5,
             },
 
             itemStyle: {
-              color: "#FB923C",
+              color: "#FDBA74",
             },
 
             areaStyle: {
@@ -520,17 +535,17 @@ export function AirQualityOutlook() {
                   {
                     offset: 0,
                     color:
-                      "rgba(251,146,60,0.18)",
+                      "rgba(253,186,116,0.22)",
                   },
                   {
                     offset: 0.6,
                     color:
-                      "rgba(251,146,60,0.05)",
+                      "rgba(253,186,116,0.07)",
                   },
                   {
                     offset: 1,
                     color:
-                      "rgba(251,146,60,0)",
+                      "rgba(253,186,116,0)",
                   },
                 ],
               },
@@ -540,10 +555,12 @@ export function AirQualityOutlook() {
               scale: true,
 
               itemStyle: {
-                color: "#FDBA74",
+                color: "#FED7AA",
                 borderColor:
                   colors.surface,
                 borderWidth: 3,
+                shadowBlur: 12,
+                shadowColor: "rgba(253,186,116,0.4)",
               },
             },
 
@@ -577,13 +594,15 @@ export function AirQualityOutlook() {
               silent: true,
 
               symbol: "circle",
-              symbolSize: 9,
+              symbolSize: 10,
 
               itemStyle: {
-                color: "#FB923C",
+                color: "#FDBA74",
                 borderColor:
                   colors.surface,
                 borderWidth: 3,
+                shadowColor: "rgba(253,186,116,0.4)",
+                shadowBlur: 10,
               },
 
               data: [
@@ -622,10 +641,19 @@ export function AirQualityOutlook() {
 
   if (isLoading) {
     return (
-      <section className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6">
+      <motion.section
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        className="relative overflow-hidden rounded-3xl border border-[var(--border)] bg-gradient-to-br from-[var(--surface)] via-[var(--surface-secondary)] to-[var(--surface)] p-6"
+      >
         <div className="animate-pulse">
-          <div className="h-4 w-44 rounded bg-[var(--control-hover)]" />
-          <div className="mt-2 h-3 w-72 rounded bg-[var(--control-hover)]" />
+          <div className="flex items-center gap-2">
+            <div className="h-4 w-44 rounded bg-[var(--control-hover)]" />
+            <div className="h-4 w-28 rounded bg-[var(--control-background)]" />
+          </div>
+          
+          <div className="mt-2 h-3 w-72 rounded bg-[var(--control-background)]" />
 
           <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
             {Array.from({
@@ -633,14 +661,18 @@ export function AirQualityOutlook() {
             }).map((_, index) => (
               <div
                 key={index}
-                className="h-24 rounded-2xl bg-[var(--control-background)]"
-              />
+                className="relative h-24 overflow-hidden rounded-2xl bg-gradient-to-br from-[var(--control-background)] to-[var(--control-hover)]"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--foreground-faint)]/10 to-transparent animate-shimmer" style={{ animationDelay: `${index * 0.15}s` }} />
+              </div>
             ))}
           </div>
 
-          <div className="mt-4 h-[280px] rounded-2xl bg-[var(--control-background)]" />
+          <div className="relative mt-4 h-[280px] overflow-hidden rounded-2xl bg-gradient-to-br from-[var(--control-background)] to-[var(--control-hover)]">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--foreground-faint)]/10 to-transparent animate-shimmer" />
+          </div>
         </div>
-      </section>
+      </motion.section>
     );
   }
 
@@ -650,15 +682,28 @@ export function AirQualityOutlook() {
     !forecastData.length
   ) {
     return (
-      <section className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6">
-        <p className="text-sm font-medium text-[var(--foreground-secondary)]">
-          Air quality outlook unavailable
-        </p>
+      <motion.section
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        className="h-full rounded-3xl border border-[var(--border)] bg-gradient-to-br from-[var(--surface)] via-[var(--surface-secondary)] to-[var(--surface)] p-6"
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--error)]/15 to-[var(--error)]/8 shadow-[0_0_16px_rgba(220,38,38,0.12)]">
+            <span className="text-lg font-bold text-[var(--error)]">!</span>
+          </div>
+          
+          <div>
+            <p className="text-sm font-medium text-[var(--foreground-secondary)]">
+              Air quality outlook unavailable
+            </p>
 
-        <p className="mt-1 text-xs text-[var(--foreground-muted)]">
-          Forecast data could not be loaded from the environmental service.
-        </p>
-      </section>
+            <p className="mt-1 text-xs text-[var(--foreground-muted)]">
+              Forecast data could not be loaded from the environmental service.
+            </p>
+          </div>
+        </div>
+      </motion.section>
     );
   }
 
@@ -686,44 +731,54 @@ export function AirQualityOutlook() {
           1,
         ],
       }}
-      className="overflow-hidden rounded-3xl border border-[var(--border)] bg-[var(--surface)] transition-colors duration-200"
+      className="relative overflow-hidden rounded-3xl border border-[var(--border)] bg-gradient-to-br from-[var(--surface)] via-[var(--surface-secondary)] to-[var(--surface)] transition-colors duration-200 shadow-[0_8px_32px_rgba(15,23,42,0.12)]"
     >
-      {/* Header */}
-      <div className="flex flex-col gap-5 p-5 sm:p-6 lg:flex-row lg:items-start lg:justify-between">
+      {/* Subtle gradient mesh overlay */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[var(--accent-secondary)]/[0.02] via-transparent to-transparent opacity-60" />
+
+      {/* Header with enhanced styling */}
+      <div className="relative flex flex-col gap-5 p-5 sm:p-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="text-sm font-medium text-[var(--foreground-secondary)]">
-              Air quality outlook
-            </p>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--control-background)] px-2.5 py-1">
+              <span className="size-1.5 rounded-full bg-gradient-to-br from-[var(--accent-secondary)] to-[var(--accent-primary)] shadow-[0_0_6px_rgba(56,189,248,0.3)]" />
+              <p className="text-sm font-medium text-[var(--foreground-secondary)]">
+                Air quality outlook
+              </p>
+            </div>
 
-            <span className="size-1 rounded-full bg-[var(--foreground-faint)]" />
+            <span className="size-1 shrink-0 rounded-full bg-[var(--foreground-faint)]" />
 
-            <span className="rounded-full border border-orange-400/10 bg-orange-400/[0.04] px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-orange-300/70">
+            <span className="rounded-full border border-orange-400/20 bg-gradient-to-br from-orange-400/[0.08] to-orange-400/[0.04] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-orange-400/85 shadow-[inset_0_1px_0_rgba(251,146,60,0.12)]">
               Next 24 hours
             </span>
           </div>
 
-          <p className="mt-1.5 max-w-xl text-xs leading-5 text-[var(--foreground-muted)]">
+          <p className="mt-2 max-w-xl text-xs leading-5 text-[var(--foreground-muted)]">
             Expected AQI changes from the current environmental forecast.
           </p>
         </div>
 
-        {/* Trend */}
-        <div
-          className={`flex w-fit items-center gap-3 rounded-2xl border px-3.5 py-2.5 ${
+        {/* Trend with enhanced styling */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+          whileHover={{ scale: 1.02 }}
+          className={`group flex w-fit items-center gap-3 rounded-2xl border px-4 py-2.5 transition-all ${
             improving
-              ? "border-emerald-400/10 bg-emerald-400/[0.035]"
+              ? "border-emerald-400/20 bg-gradient-to-br from-emerald-400/[0.08] to-emerald-400/[0.04] shadow-[inset_0_1px_0_rgba(52,211,153,0.12)]"
               : change > 0
-                ? "border-orange-400/10 bg-orange-400/[0.035]"
-                : "border-[var(--border)] bg-[var(--control-background)]"
+                ? "border-orange-400/20 bg-gradient-to-br from-orange-400/[0.08] to-orange-400/[0.04] shadow-[inset_0_1px_0_rgba(251,146,60,0.12)]"
+                : "border-[var(--border)] bg-gradient-to-br from-[var(--control-background)] to-[var(--control-hover)]"
           }`}
         >
           <div
-            className={`flex size-8 items-center justify-center rounded-xl ${
+            className={`flex size-9 items-center justify-center rounded-xl transition-all ${
               improving
-                ? "bg-emerald-400/[0.07]"
+                ? "bg-gradient-to-br from-emerald-400/[0.15] to-emerald-400/[0.08] shadow-[inset_0_1px_0_rgba(52,211,153,0.15)]"
                 : change > 0
-                  ? "bg-orange-400/[0.07]"
+                  ? "bg-gradient-to-br from-orange-400/[0.15] to-orange-400/[0.08] shadow-[inset_0_1px_0_rgba(251,146,60,0.15)]"
                   : "bg-[var(--control-background)]"
             }`}
           >
@@ -733,23 +788,23 @@ export function AirQualityOutlook() {
                   ? ArrowDown01Icon
                   : ArrowUp01Icon
               }
-              size={15}
+              size={16}
               strokeWidth={1.6}
               className={
                 change < 0
-                  ? "text-emerald-300/70"
-                  : "text-orange-300/70"
+                  ? "text-emerald-400/90"
+                  : "text-orange-400/90"
               }
             />
           </div>
 
           <div>
             <p
-              className={`text-[10px] font-semibold uppercase tracking-[0.12em] ${
+              className={`text-[10px] font-semibold uppercase tracking-[0.12em] transition-colors group-hover:text-[var(--foreground-secondary)] ${
                 improving
-                  ? "text-emerald-300/70"
+                  ? "text-emerald-400/90"
                   : change > 0
-                    ? "text-orange-300/70"
+                    ? "text-orange-400/90"
                     : "text-[var(--foreground-secondary)]"
               }`}
             >
@@ -760,18 +815,18 @@ export function AirQualityOutlook() {
               {Math.abs(change)} AQI points over 24h
             </p>
           </div>
-        </div>
+        </motion.div>
       </div>
 
-      {/* Summary */}
-      <div className="grid border-y border-[var(--border)] sm:grid-cols-3">
-        <div className="p-5 sm:border-r sm:border-[var(--border)]">
+      {/* Summary with enhanced cards */}
+      <div className="relative grid border-y border-[var(--border)] sm:grid-cols-3">
+        <div className="group p-5 sm:border-r sm:border-[var(--border)]">
           <p className="text-[9px] font-medium uppercase tracking-[0.14em] text-[var(--foreground-subtle)]">
             Current
           </p>
 
-          <div className="mt-2 flex items-baseline gap-1.5">
-            <span className="text-2xl font-semibold tracking-[-0.045em] text-[var(--foreground)]">
+          <div className="mt-2.5 flex items-baseline gap-1.5">
+            <span className="text-2xl font-semibold tracking-[-0.045em] text-[var(--foreground)] group-hover:text-[var(--foreground-secondary)]">
               {currentAQI}
             </span>
 
@@ -785,18 +840,18 @@ export function AirQualityOutlook() {
           </p>
         </div>
 
-        <div className="border-t border-[var(--border)] p-5 sm:border-t-0 sm:border-r">
+        <div className="group border-t border-[var(--border)] p-5 transition-colors hover:bg-gradient-to-br hover:from-[var(--control-background)] hover:to-[var(--accent-glow)]/30 sm:border-t-0 sm:border-r">
           <p className="text-[9px] font-medium uppercase tracking-[0.14em] text-[var(--foreground-subtle)]">
             Expected peak
           </p>
 
-          <div className="mt-2 flex items-baseline gap-1.5">
-            <span className="text-2xl font-semibold tracking-[-0.045em] text-[var(--foreground)]">
+          <div className="mt-2.5 flex items-baseline gap-1.5">
+            <span className="text-2xl font-semibold tracking-[-0.045em] text-[var(--foreground)] group-hover:text-orange-400/90">
               {highestPoint?.aqi ??
                 "—"}
             </span>
 
-            <span className="text-[9px] text-orange-300/60">
+            <span className="text-[9px] text-orange-400/75">
               AQI
             </span>
           </div>
@@ -811,13 +866,13 @@ export function AirQualityOutlook() {
           </p>
         </div>
 
-        <div className="border-t border-[var(--border)] p-5 sm:border-t-0">
+        <div className="group border-t border-[var(--border)] p-5 transition-colors hover:bg-gradient-to-br hover:from-[var(--control-background)] hover:to-[var(--accent-glow)]/30 sm:border-t-0">
           <p className="text-[9px] font-medium uppercase tracking-[0.14em] text-[var(--foreground-subtle)]">
             Expected average
           </p>
 
-          <div className="mt-2 flex items-baseline gap-1.5">
-            <span className="text-2xl font-semibold tracking-[-0.045em] text-[var(--foreground)]">
+          <div className="mt-2.5 flex items-baseline gap-1.5">
+            <span className="text-2xl font-semibold tracking-[-0.045em] text-[var(--foreground)] group-hover:text-[var(--foreground-secondary)]">
               {averageAQI}
             </span>
 
@@ -832,11 +887,11 @@ export function AirQualityOutlook() {
         </div>
       </div>
 
-      {/* Chart */}
-      <div className="p-5 sm:p-6">
-        <div className="mb-2 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="size-1.5 rounded-full bg-orange-400" />
+      {/* Chart with enhanced presentation */}
+      <div className="relative p-5 sm:p-6">
+        <div className="mb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <span className="size-2 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 shadow-[0_0_8px_rgba(251,146,60,0.4)]" />
 
             <span className="text-[9px] font-medium uppercase tracking-[0.13em] text-[var(--foreground-subtle)]">
               Expected AQI
@@ -858,25 +913,30 @@ export function AirQualityOutlook() {
         </div>
       </div>
 
-      {/* Timeline */}
-      <div className="border-t border-[var(--border)] px-5 py-5 sm:px-6">
-        <div className="mb-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <HugeiconsIcon
-              icon={Calendar03Icon}
-              size={14}
-              strokeWidth={1.5}
-              className="text-[var(--foreground-subtle)]"
-            />
+      {/* Timeline with enhanced styling */}
+      <div className="relative border-t border-[var(--border)] px-5 py-5 sm:px-6">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--control-background)] to-[var(--control-hover)]">
+              <HugeiconsIcon
+                icon={Calendar03Icon}
+                size={14}
+                strokeWidth={1.5}
+                className="text-[var(--foreground-subtle)]"
+              />
+            </div>
 
             <span className="text-[10px] font-medium text-[var(--foreground-muted)]">
               Forecast timeline
             </span>
           </div>
 
-          <span className="text-[9px] uppercase tracking-[0.1em] text-[var(--foreground-faint)]">
-            Live forecast
-          </span>
+          <div className="inline-flex items-center gap-2 rounded-full border border-[var(--border-subtle)] bg-[var(--control-background)] px-2.5 py-1">
+            <span className="size-1.5 rounded-full bg-gradient-to-br from-[var(--accent-secondary)] to-[var(--accent-primary)] shadow-[0_0_4px_rgba(56,189,248,0.3)]" />
+            <span className="text-[9px] uppercase tracking-[0.1em] text-[var(--foreground-subtle)]">
+              Live forecast
+            </span>
+          </div>
         </div>
 
         <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-12">
@@ -887,7 +947,7 @@ export function AirQualityOutlook() {
                 0,
             )
             .map(
-              (point) => {
+              (point, index) => {
                 const isPeak =
                   point.aqi ===
                   highestPoint?.aqi;
@@ -919,14 +979,22 @@ export function AirQualityOutlook() {
                         reducedMotion
                           ? 0
                           : 0.3,
+                      delay: index * 0.03,
                     }}
-                    className={`rounded-xl border p-2.5 ${
+                    whileHover={{ 
+                      y: -2,
+                      scale: 1.03,
+                    }}
+                    className={`group relative overflow-hidden rounded-xl border p-2.5 transition-all ${
                       isPeak
-                        ? "border-orange-400/15 bg-orange-400/[0.045]"
-                        : "border-[var(--border-subtle)] bg-[var(--control-background)]"
+                        ? "border-orange-400/25 bg-gradient-to-br from-orange-400/[0.1] to-orange-400/[0.05] shadow-[inset_0_1px_0_rgba(251,146,60,0.15)] hover:shadow-[0_4px_12px_rgba(251,146,60,0.15)]"
+                        : "border-[var(--border-subtle)] bg-gradient-to-br from-[var(--control-background)] to-[var(--control-hover)] hover:border-[var(--foreground-faint)] hover:shadow-[0_4px_12px_rgba(148,163,184,0.12)]"
                     }`}
                   >
-                    <p className="truncate text-[9px] text-[var(--foreground-subtle)]">
+                    {/* Subtle accent overlay on hover */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-secondary)]/[0.03] to-transparent opacity-0 transition-opacity group-hover:opacity-100 pointer-events-none" />
+                    
+                    <p className="relative truncate text-[9px] text-[var(--foreground-subtle)] group-hover:text-[var(--foreground-muted)]">
                       {formatForecastTime(
                         point.time,
                         location.timezone,
@@ -934,10 +1002,10 @@ export function AirQualityOutlook() {
                     </p>
 
                     <p
-                      className={`mt-1.5 text-sm font-semibold tracking-[-0.03em] ${
+                      className={`relative mt-1.5 text-sm font-semibold tracking-[-0.03em] transition-colors ${
                         isPeak
-                          ? "text-orange-300/80"
-                          : "text-[var(--foreground-secondary)]"
+                          ? "text-orange-400/90 group-hover:text-orange-400"
+                          : "text-[var(--foreground-secondary)] group-hover:text-[var(--foreground)]"
                       }`}
                     >
                       {point.aqi}
