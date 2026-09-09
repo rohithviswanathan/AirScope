@@ -656,22 +656,6 @@ export function Topbar() {
               </motion.span>
             </AnimatePresence>
           </motion.button>
-
-          {/* Avatar */}
-          <motion.button
-            type="button"
-            whileTap={{
-              scale: 0.94,
-            }}
-            aria-label="Open profile"
-            className="group relative flex size-9 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--control-background)] text-[10px] font-semibold text-[var(--foreground-secondary)] outline-none transition-colors hover:border-[var(--foreground-faint)] hover:bg-[var(--control-hover)] focus-visible:ring-2 focus-visible:ring-[var(--foreground-faint)]"
-          >
-            <span className="absolute inset-[2px] rounded-[8px] border border-[var(--border-subtle)]" />
-
-            <span className="relative z-10">
-              R
-            </span>
-          </motion.button>
         </div>
       </div>
 
