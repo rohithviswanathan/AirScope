@@ -85,6 +85,25 @@ const STATUS_STYLES: Record<
   },
 };
 
+/*
+ * Mobile viewports get a static (non-animating) marker ring.
+ * Weaker mobile GPUs struggle to composite several concurrent
+ * infinite CSS animations (marker pulse + badge glow) under
+ * backdrop-blur layers, which shows up as flashing/hanging
+ * rather than a smooth loop. Desktop keeps the full animation.
+ */
+const MOBILE_BREAKPOINT_PX = 768;
+
+function isMobileViewport() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return (
+    window.innerWidth <= MOBILE_BREAKPOINT_PX
+  );
+}
+
 /* -------------------------------------------------------------------------- */
 /* Helpers                                                                    */
 /* -------------------------------------------------------------------------- */
@@ -126,6 +145,9 @@ function createMarkerElement(
 ) {
   const colors =
     STATUS_STYLES[status];
+
+  const mobile =
+    isMobileViewport();
 
   const marker =
     document.createElement("div");
@@ -185,14 +207,15 @@ function createMarkerElement(
       transition:
         "transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 220ms ease, background-color 220ms ease",
       zIndex: "2",
-      willChange: "transform",
     },
   );
 
   /*
    * Pulsing ring behind the marker.
-   * Speed scales with severity: worse AQI pulses faster,
-   * giving an immediate ambient signal before hover.
+   * Desktop: animates via CSS keyframes, speed scales with severity.
+   * Mobile: rendered as a static ring at reduced opacity — no
+   * animation loop — to avoid compositing multiple infinite
+   * animations on weaker mobile GPUs (see isMobileViewport above).
    */
   const pulseRing =
     document.createElement("span");
@@ -204,11 +227,29 @@ function createMarkerElement(
       inset: "-2px",
       borderRadius: "999px",
       border: `2px solid ${colors.color}`,
-      opacity: "0.55",
       pointerEvents: "none",
-      animation: `airscope-marker-pulse ${colors.pulseDuration} cubic-bezier(0.22, 1, 0.36, 1) infinite`,
     },
   );
+
+  if (mobile) {
+    Object.assign(
+      pulseRing.style,
+      {
+        opacity: "0.32",
+        animation: "none",
+      },
+    );
+  } else {
+    Object.assign(
+      pulseRing.style,
+      {
+        opacity: "0.55",
+        willChange:
+          "transform, opacity",
+        animation: `airscope-marker-pulse ${colors.pulseDuration} cubic-bezier(0.22, 1, 0.36, 1) infinite`,
+      },
+    );
+  }
 
   const outerGlow =
     document.createElement("span");
@@ -1068,7 +1109,7 @@ export function AirQualityMap() {
 
         {mapData && activeColors && (
           <div
-            className="hidden shrink-0 animate-[airscope-badge-breathe_2.6s_ease-in-out_infinite] rounded-xl border px-3 py-2 text-right sm:block"
+            className="airscope-badge-glow hidden shrink-0 rounded-xl border px-3 py-2 text-right sm:block"
             style={{
               borderColor: `${activeColors.color}26`,
               backgroundColor: `${activeColors.color}0d`,
