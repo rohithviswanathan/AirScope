@@ -136,6 +136,25 @@ const statusConfig: Record<
 
 const AQI_MAX = 300;
 
+/*
+ * Mobile viewports skip the ambient glow "breathing" animations.
+ * Weaker mobile GPUs struggle to composite Framer-Motion-driven
+ * scale/opacity loops layered under large blur/box-shadow regions —
+ * it shows up as flashing/hanging rather than a smooth loop.
+ * Desktop keeps the full animated glow.
+ */
+const MOBILE_BREAKPOINT_PX = 768;
+
+function isMobileViewport() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return (
+    window.innerWidth <= MOBILE_BREAKPOINT_PX
+  );
+}
+
 function clamp(
   value: number,
   min: number,
@@ -156,6 +175,11 @@ export function AQIHero({
   data,
 }: AQIHeroProps) {
   const reducedMotion = useReducedMotion();
+
+  const mobile = isMobileViewport();
+
+  const skipAmbientLoop =
+    reducedMotion || mobile;
 
   const config = statusConfig[data.status];
 
@@ -199,8 +223,8 @@ export function AQIHero({
           background: `radial-gradient(circle, ${config.glow} 0%, transparent 70%)`,
         }}
         animate={
-          reducedMotion
-            ? { opacity: 0.8 }
+          skipAmbientLoop
+            ? { opacity: 0.7 }
             : {
                 opacity: [0.55, 0.85, 0.55],
                 scale: [1, 1.06, 1],
@@ -208,7 +232,7 @@ export function AQIHero({
         }
         transition={{
           duration: 7,
-          repeat: reducedMotion ? 0 : Infinity,
+          repeat: skipAmbientLoop ? 0 : Infinity,
           ease: "easeInOut",
         }}
       />
@@ -293,7 +317,7 @@ export function AQIHero({
                   boxShadow: `0 0 80px ${config.glow}, 0 0 120px ${config.glow}`,
                 }}
                 animate={
-                  reducedMotion
+                  skipAmbientLoop
                     ? { opacity: 0.6 }
                     : {
                         opacity: [0.5, 0.7, 0.5],
@@ -302,7 +326,7 @@ export function AQIHero({
                 }
                 transition={{
                   duration: 5,
-                  repeat: reducedMotion ? 0 : Infinity,
+                  repeat: skipAmbientLoop ? 0 : Infinity,
                   ease: "easeInOut",
                 }}
               />
@@ -562,7 +586,11 @@ export function AQIHero({
             {/* Key information with gradient cards */}
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <motion.div
-                whileHover={{ y: -2, scale: 1.01 }}
+                whileHover={
+                  reducedMotion
+                    ? undefined
+                    : { y: -2, scale: 1.01 }
+                }
                 transition={{ type: "spring", stiffness: 400, damping: 25 }}
                 className="group relative overflow-hidden rounded-2xl border border-[var(--border)] bg-gradient-to-br from-[var(--control-background)] via-[var(--control-background)] to-[var(--accent-glow)] p-4 transition-all hover:border-[var(--foreground-faint)] hover:shadow-[0_6px_20px_rgba(148,163,184,0.12)]"
               >
@@ -586,7 +614,11 @@ export function AQIHero({
               </motion.div>
 
               <motion.div
-                whileHover={{ y: -2, scale: 1.01 }}
+                whileHover={
+                  reducedMotion
+                    ? undefined
+                    : { y: -2, scale: 1.01 }
+                }
                 transition={{ type: "spring", stiffness: 400, damping: 25 }}
                 className="group relative overflow-hidden rounded-2xl border border-[var(--border)] bg-gradient-to-br from-[var(--control-background)] via-[var(--control-background)] to-[var(--accent-glow)] p-4 transition-all hover:border-[var(--foreground-faint)] hover:shadow-[0_6px_20px_rgba(148,163,184,0.12)]"
               >
@@ -614,7 +646,11 @@ export function AQIHero({
 
             {/* Guidance with enhanced styling */}
             <motion.div
-              whileHover={{ scale: 1.01 }}
+              whileHover={
+                reducedMotion
+                  ? undefined
+                  : { scale: 1.01 }
+              }
               transition={{ type: "spring", stiffness: 400, damping: 25 }}
               className="relative mt-4 overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-gradient-to-br from-[var(--control-background)] via-[var(--control-background)] to-[var(--accent-glow)]/50 p-4 transition-all hover:border-[var(--border-hover)] hover:shadow-[0_6px_20px_rgba(148,163,184,0.1)]"
             >
