@@ -333,7 +333,8 @@ button:not(:disabled) {
    AirQualityMap visual polish
    ───────────────────────────────────────────── */
 
-/* Marker pulse ring — speed is set inline per-severity */
+/* Marker pulse ring — speed is set inline per-severity.
+   transform + opacity only, GPU-friendly. */
 @keyframes airscope-marker-pulse {
   0% {
     transform: scale(1);
@@ -361,13 +362,74 @@ button:not(:disabled) {
   }
 }
 
-/* Header AQI badge breathing glow, colored via currentColor */
+/*
+ * Header AQI badge breathing glow.
+ * Uses opacity on a static-shadow pseudo layer instead of animating
+ * box-shadow directly — box-shadow is not GPU-composited and animating
+ * it causes visible flicker/jank on mobile GPUs.
+ */
+.airscope-badge-glow {
+  position: relative;
+}
+
+.airscope-badge-glow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 14px -3px currentColor;
+  opacity: 0;
+  pointer-events: none;
+  animation: airscope-badge-breathe 2.6s ease-in-out infinite;
+  will-change: opacity;
+}
+
 @keyframes airscope-badge-breathe {
   0%,
   100% {
-    box-shadow: 0 0 0 0 currentColor;
+    opacity: 0;
   }
   50% {
-    box-shadow: 0 0 14px -3px currentColor;
+    opacity: 0.9;
+  }
+}
+
+/*
+ * Mobile performance guardrails.
+ *
+ * Small screens are typically weaker GPUs and struggle to composite
+ * multiple concurrent infinite animations (marker pulse + badge glow)
+ * layered under backdrop-blur elements, which reads as flashing/hanging
+ * rather than a smooth loop. Scale animations back on narrow viewports.
+ */
+@media (max-width: 768px) {
+  @keyframes airscope-marker-pulse {
+    0%,
+    100% {
+      transform: scale(1);
+      opacity: 0.32;
+    }
+  }
+
+  .airscope-badge-glow::after {
+    animation: none;
+    opacity: 0.25;
+  }
+
+  .backdrop-blur-md {
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+  }
+}
+
+/* Respect reduced-motion preferences across the board */
+@media (prefers-reduced-motion: reduce) {
+  .airscope-badge-glow::after {
+    animation: none;
+    opacity: 0.25;
+  }
+
+  .airscope-map-popup .maplibregl-popup-content {
+    animation: none;
   }
 }
